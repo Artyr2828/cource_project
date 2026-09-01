@@ -13,7 +13,7 @@ class RegistrationController extends AbstractController
 {
     public function __construct(private RegistrationService $serviceRegistration){}
 
-    #[Route('/register', name: 'app_register', methods: ['POST'])]
+    #[Route('/api/register', name: 'app_register', methods: ['POST'])]
     public function register(#[MapRequestPayload] RegisterUserRequest $dto): JsonResponse
     {
         $token = $this->serviceRegistration->register($dto);
