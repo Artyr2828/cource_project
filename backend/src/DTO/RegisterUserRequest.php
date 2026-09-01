@@ -9,6 +9,6 @@ class RegisterUserRequest {
    public string $email;
 
    #[Constraints\NotBlank(message: "Password can't be empty", groups: ['First'])]
-   #[Constraints\Length(min:8, minMessage: "Password is very tiny", groups: ['Second'])]
+   #[Constraints\Length(min:8, minMessage: "Password must be at least 8 characters long", groups: ['Second'])]
    public string $password;
 }
