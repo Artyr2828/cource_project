@@ -8,30 +8,24 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\Request;
 use App\DTO\LoginUserRequest;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
-use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
-use App\Repository\UserRepository;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use App\Service\LoginService;
+use Symfony\Component\HttpFoundation\Cookie;
+
 class LoginController extends AbstractController
 {
     public function __construct(
-        private JWTTokenManagerInterface $jwt,
-        private UserRepository $userRepository,
-        private UserPasswordHasherInterface $passwordHasher
+        private LoginService $loginService,
     ){}
     
 
     #[Route(path: '/api/login', name: 'app_login')]
-    public function login(#[MapRequestPayload] LoginUserRequest $loginUserRequest): Response
+    public function login(#[MapRequestPayload] LoginUserRequest $loginUserRequest, Request $request): Response
     {
-        $user = $this->userRepository->findOneBy(['email'=>$loginUserRequest->email]);
-        if (!$user) {
-            return $this->json(['message' => 'User not found'], Response::HTTP_NOT_FOUND);
-        }
-        if (!$this->passwordHasher->isPasswordValid($user, $loginUserRequest->password)) {
-            return $this->json(['message' => 'Invalid password'], Response::HTTP_UNAUTHORIZED);
-        }
-        $jwt = $this->jwt->create($user);
-        return $this->json(['token'=>$jwt], 200);
+        $this->loginService->validateLoginAttempts($loginUserRequest->email, $request->getClientIp());
+        $jwt = $this->loginService->login($loginUserRequest, $request->getClientIp());
+        $response = $this->json(['status' => 'ok'], Response::HTTP_OK);
+        $response->headers->setCookie(Cookie::create('BEARER', $jwt, 0, '/', null, true, true, false, 'Strict'));
+        return $response;
     }
 
     #[Route(path: '/logout', name: 'app_logout')]

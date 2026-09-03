@@ -14,6 +14,7 @@
      <span  v-if="errorMessage" :key="errorKey" class="text-danger text-center flash-once" style="padding-top: 5px;">{{ errorMessage }}</span>
      <span v-else class="form-text text-center" style="padding-top: 5px;">Make sure the password consists of 8 characters</span>
      <p class="text-center mb-0 mt-3 fst-italic">Already have an account? <RouterLink to="/login" style="text-decoration: none;">Login</RouterLink></p>
+    
   </div>
    
   </div>
@@ -22,17 +23,21 @@
 <script setup>
 import { ref } from 'vue';
 import axios from 'axios';
+import { useRouter } from 'vue-router';
+import api from '../services/api.js';
+
 const email = ref('');
 const password = ref('');
 const errorMessage = ref('');
 const isLoader = ref(false);
 const errorKey = ref(0);
+const router = useRouter();
 
 async function register(event) {
  
-  if (errorMessage.value) {
-    errorKey.value++;
-  }
+  
+  errorKey.value++;
+  
   if (!email.value || !password.value) {
     errorMessage.value = 'Email and password are required';
     
@@ -50,11 +55,13 @@ async function register(event) {
   
   event.preventDefault();
   try{
-    
-    const response = await axios.post('/register', {
+    errorMessage.value = '';
+    const response = await api.post('/api/register', {
       email: email.value,
       password: password.value
     });
+    localStorage.setItem('token', response.data.token);
+    router.push('/');
   } catch (error) {
     if (error.request) {
       if (error.response === undefined) {

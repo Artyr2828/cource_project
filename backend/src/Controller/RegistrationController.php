@@ -8,6 +8,7 @@ use App\DTO\RegisterUserRequest;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use App\Service\RegistrationService;
+use Symfony\Component\HttpFoundation\Cookie;
 
 class RegistrationController extends AbstractController
 {
@@ -17,7 +18,9 @@ class RegistrationController extends AbstractController
     public function register(#[MapRequestPayload] RegisterUserRequest $dto): JsonResponse
     {
         $token = $this->serviceRegistration->register($dto);
-        return $this->json(['token' => $token], 201);
+        $response = $this->json(['status' => 'ok'], 201);
+        $response->headers->setCookie(Cookie::create('BEARER', $token, 0, '/', null, true, true, false, 'Strict'));
+        return $response;
     }
 
     #[Route('/preview_error', name: '_preview_error')]

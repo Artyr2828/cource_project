@@ -4,19 +4,24 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/', name: 'root', redirect: () => {
-        return localStorage.getItem('token') ? '/profile' : '/register';
-      }
+      path: '/', 
+      name: 'home', 
+      component: () => import('../views/HomeView.vue')
     },
     {
     path: '/register',
     name: 'register',
-    component: () => import('../Registration/RegistrationView.vue')
+    component: () => import('../views/RegistrationView.vue')
     },
     {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
-      component: () => import('../NotFoundView.vue')
+      component: () => import('../views/NotFoundView.vue')
+    },
+    {
+      name: 'login',
+      path: '/login',
+      component: () => import('../views/LoginView.vue')
     }
   ],
 })
