@@ -11,6 +11,8 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 
 COPY . .
+ENV APP_ENV=prod
+RUN composer install --no-dev --optimize-autoloader
 RUN composer install --no-dev --optimize-autoloader
 RUN chown -R www-data:www-data var
 
