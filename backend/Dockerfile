@@ -41,7 +41,7 @@ COPY docker/nginx.conf /etc/nginx/http.d/default.conf
 COPY docker/opcache.ini $PHP_INI_DIR/conf.d/opcache.ini
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-RUN chown -R www-data:www-data /var/www/html/var
+RUN mkdir -p /var/www/html/var && chown -R www-data:www-data /var/www/html/var
 
 EXPOSE 80
 
