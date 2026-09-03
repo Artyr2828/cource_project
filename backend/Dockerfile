@@ -6,6 +6,7 @@ RUN apk add --no-cache \
     unzip \
     postgresql-dev \
     libzip-dev
+
 RUN docker-php-ext-install pdo pdo_pgsql zip
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -26,9 +27,11 @@ RUN apk add --no-cache \
     nginx \
     supervisor \
     postgresql-libs \
-    libzip
-
-RUN docker-php-ext-install pdo pdo_pgsql zip opcache
+    postgresql-dev \
+    libzip \
+    libzip-dev \
+    && docker-php-ext-install pdo pdo_pgsql zip opcache \
+    && apk del postgresql-dev libzip-dev
 
 WORKDIR /var/www/html
 
@@ -40,8 +43,6 @@ COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 RUN chown -R www-data:www-data /var/www/html/var
 
-
 EXPOSE 80
-
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
