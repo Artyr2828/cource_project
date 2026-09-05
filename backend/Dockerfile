@@ -11,7 +11,9 @@ RUN apt-get update && apt-get install -y \
 
 COPY ./nginx/nginx.conf /etc/nginx/conf.d/default.conf
 
-RUN chown -R www-data /var/www/var
+RUN  mkdir -p /var/www/var \ 
+    chown -R www-data /var/www/var
+
 COPY ./docker/entrypoint.sh /var/www/
 RUN chmod +x /var/www/entrypoint.sh
 ENTRYPOINT [ "/var/www/entrypoint.sh" ]
