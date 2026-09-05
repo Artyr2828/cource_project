@@ -1,56 +1,18 @@
+FROM php:8.5-fpm
 
-FROM php:8.4-fpm-alpine AS builder
+WORKDIR /var/www
 
-RUN apk add --no-cache \
-    git \
-    unzip \
-    postgresql-dev \
-    libzip-dev \
-    icu-dev
+COPY . /var/www/
 
-RUN docker-php-ext-install pdo pdo_pgsql zip intl
-
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-WORKDIR /app
-
-COPY composer.json composer.lock ./
-
-ENV APP_ENV=prod
-RUN composer install --no-dev --no-scripts --prefer-dist --no-autoloader
-
-COPY . .
-RUN composer dump-autoload --no-dev --optimize
-
-FROM php:8.4-fpm-alpine
-
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
     nginx \
-    supervisor \
-    postgresql-libs \
-    postgresql-dev \
-    libzip \
-    libzip-dev \
-    icu-libs \
-    icu-dev \
-    && docker-php-ext-install pdo pdo_pgsql zip opcache intl \
-    && apk del postgresql-dev libzip-dev icu-dev
+    && docker-php-ext-install pdo_pgsql
 
-WORKDIR /var/www/html
+COPY ./nginx/nginx.conf /etc/nginx/conf.d/default.conf
 
-
-COPY --from=builder /app /var/www/html
-
-COPY docker/nginx.conf /etc/nginx/http.d/default.conf
-COPY docker/opcache.ini $PHP_INI_DIR/conf.d/opcache.ini
-COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-COPY docker/entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
-RUN mkdir -p /var/www/html/var && chown -R www-data:www-data /var/www/html/var
-
-EXPOSE 80
-
-ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+RUN chown -R www-data /var/www/var
+COPY ./docker/entrypoint.sh /var/www/
+RUN chmod +x /var/www/entrypoint.sh
+ENTRYPOINT [ "/var/www/entrypoint.sh" ]
+CMD ["php-fpm"] 
