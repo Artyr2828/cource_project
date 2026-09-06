@@ -50,7 +50,6 @@ async function login() {
         });
         router.push('/profile');
     } catch (error) {
-        
         if (error.request) {
             if (error.response === undefined) {
                 errorMessage.value = 'Unable to connect to the server. Check your internet connection or try again later.';

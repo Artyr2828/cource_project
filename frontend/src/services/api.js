@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: 'https://cource-project-1-wwmt.onrender.com',
+  baseURL: 'https://cource-project-uphw.onrender.com/',
   withCredentials: true
 });
 
