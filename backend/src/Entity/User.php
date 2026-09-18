@@ -8,6 +8,11 @@ use App\Enums\UserRole;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use App\Entity\UserProfile;
+use App\Entity\UserAttribute;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
+
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\HasLifecycleCallbacks]
@@ -31,13 +36,29 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     length: 20,
     enumType: UserRole::class,
     options: ['default'=>'candidate'])]
-    private $role = UserRole::CANDIDATE;
+    private UserRole $role = UserRole::CANDIDATE;
 
     #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $createdAt;
 
+    #[ORM\OneToOne(mappedBy: 'user', targetEntity: UserProfile::class)]
+    private ?UserProfile $profile = null;
+
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: UserAttribute::class)]
+    private Collection $attributes;
+
+
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
+
+    public function __construct()
+    {
+        $this->attributes = new ArrayCollection();
+    }
+
+    public function addToAttributes(UserAttribute $attribute){
+        $this->attributes->add($attribute);
+    }
 
     public function getId(): ?int
     {
@@ -70,10 +91,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getRole(): ?string
     {
-        return $this->role;
+        return $this->role->value;
     }
 
-    public function setRole(string $role): static
+    public function setRole(UserRole $role): static
     {
         $this->role = $role;
 
@@ -82,17 +103,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getCreatedAt(): ?\DateTimeImmutable
     {
-        return $this->created_at;
+        return $this->createdAt;
     }
 
     public function getUpdatedAt(): ?\DateTimeImmutable
     {
-        return $this->updated_at;
+        return $this->updatedAt;
     }
     #[ORM\PreUpdate]
     public function setUpdatedAt(): void
     {
-        $this->updated_at = new \DateTimeImmutable();
+        $this->updatedAt = new \DateTimeImmutable();
     }
 
     #[ORM\PrePersist]
@@ -105,8 +126,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     public function getRoles(): array{
-      $roles = ['ROLE' . strtoupper($this->role->value)];
+      $roles = ['ROLE_' . strtoupper($this->role->value)];
       $roles[] = 'ROLE_USER';
       return $roles;
+    }
+
+    public function getProfile(): array{
+        $profile = [
+            'me' => $this->profile,  
+            'attributes' => $this->attributes
+        ];
+        return $profile;
     }
 }

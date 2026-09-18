@@ -7,6 +7,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use App\Repository\UserRepository;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
+use App\Entity\UserProfile;
 
 final class RegistrationService {
 
@@ -20,7 +21,11 @@ final class RegistrationService {
     public function register(RegisterUserRequest $dto): string{
         $this->ensureUserDoesNotExist($dto->email);
         $user = $this->createEntityUser($dto);
+        $profile = new UserProfile();
+        $profile->setUser($user);
         $this->sendToDatabase($user);
+        $this->entityManager->persist($profile);
+        $this->entityManager->flush();
         $token = $this->jwt->create($user);
         return $token;
     }

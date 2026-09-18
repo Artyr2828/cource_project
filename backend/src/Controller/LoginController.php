@@ -10,19 +10,21 @@ use App\DTO\LoginUserRequest;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use App\Service\LoginService;
 use Symfony\Component\HttpFoundation\Cookie;
+use App\Service\RateLimitService;
 
 class LoginController extends AbstractController
 {
     public function __construct(
         private LoginService $loginService,
+        private RateLimitService $rateLimitService
     ){}
     
 
     #[Route(path: '/api/login', name: 'app_login')]
-    public function login(#[MapRequestPayload] LoginUserRequest $loginUserRequest, Request $request): Response
+    public function login(#[MapRequestPayload] LoginUserRequest $dto, Request $request): Response
     {
-        $this->loginService->validateLoginAttempts($loginUserRequest->email, $request->getClientIp());
-        $jwt = $this->loginService->login($loginUserRequest, $request->getClientIp());
+        $this->rateLimitService->enforce($dto->email, $request->getClientIp());
+        $jwt = $this->loginService->login($dto, $request->getClientIp());
         $response = $this->json(['status' => 'ok'], Response::HTTP_OK);
         $response->headers->setCookie(Cookie::create('BEARER', $jwt, 0, '/', null, true, true, false, 'Strict'));
         return $response;

@@ -16,16 +16,26 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';  
+import { computed, ref } from 'vue';  
 import axios from 'axios';
 import api from '../services/api.js';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
+import { onMounted } from 'vue';
 const router = useRouter();
-const email = ref('cs');
+const route = useRoute();
+const email = ref('');
 const password = ref('');
 const errorMessage = ref('');
 const isLoader = ref(false);
 const errorCount = ref(0);
+
+const error = computed(() => route.query.error);
+
+onMounted(() => {
+    if (error.value){
+        errorMessage.value = error.value;
+    }
+})
 
 async function login() {
     errorCount.value++;
