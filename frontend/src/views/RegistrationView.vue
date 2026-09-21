@@ -25,7 +25,8 @@ import { ref } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
 import api from '../services/api.js';
-
+import {useUserProfileStore} from '@/stores/UserProfileStore.js'
+const useUserProfile = useUserProfileStore();
 const email = ref('');
 const password = ref('');
 const errorMessage = ref('');
@@ -60,8 +61,8 @@ async function register(event) {
       email: email.value,
       password: password.value
     });
-    localStorage.setItem('token', response.data.token);
-    router.push('/');
+    await useUserProfile.fetchProfile();
+    router.push('/profile');
   } catch (error) {
     if (error.request) {
       if (error.response === undefined) {

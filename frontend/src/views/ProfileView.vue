@@ -26,11 +26,27 @@
                 use-cloud-image-editor="true"
             ></uc-config>
 
+           <uc-config
+                ctx-name="my-attribute-uploader"
+                pubkey="6a5a21105b2bdff19cda"
+                img-only="true"
+                multiple="false"
+                use-cloud-image-editor="true"
+            ></uc-config>
+
             <uc-upload-ctx-provider
                 id="avatar-uploader-ctx"
                 ctx-name="my-avatar-uploader"
                
             ></uc-upload-ctx-provider>
+                        
+            <uc-upload-ctx-provider
+                id="attribute-uploader-ctx"
+                ctx-name="my-attribute-uploader"
+               
+            ></uc-upload-ctx-provider>
+            
+            
 
             <!--Секция Me-->
             <div class="header w-100 d-flex justify-content-between bg-secondary rounded" style="margin-top: 50px;">
@@ -129,7 +145,7 @@
                                 class="area position-absolute top-0 start-0 h-100 w-100"
                                 @dragenter.prevent="onDragEnter"
                                 @dragover.prevent
-                                @drop.prevent="handleFile"
+                                @drop.prevent="initFlow"
                                 @dragleave="onDragLeave"
                                 @mouseenter="onMouseEnter"
                                 @mouseleave="onMouseLeave"
@@ -157,18 +173,20 @@
                         
                             <div class="col-6">
                                 <label class="form-label text-muted small fw-medium mb-1">First Name</label>
-                                <input v-model.trim="userProfile.user.me.firstName"  class="form-control form-control-sm" placeholder="Your first name"> 
+                                <input v-model.trim="userProfile.user.me.firstName" :class="{'is-invalid': getMeError('firstName')}" :title="getMeError('firstName')" class="form-control form-control-sm" placeholder="Your first name"> 
+                                <small v-if="getMeError('firstName')" class="small text-danger">{{ getMeError('firstName') }}</small>
                             </div>
                             
                             <div class="col-6">
                                 <label class="form-label text-muted small fw-medium mb-1">Last Name</label>
-                                <input v-model="userProfile.user.me.lastName" class="form-control form-control-sm" placeholder="Your last name"></input>
+                                <input v-model="userProfile.user.me.lastName" :class="{'is-invalid': getMeError('lastName')}" :title="getMeError('lastName')" class="form-control form-control-sm" placeholder="Your last name"></input>
+                                <small v-if="getMeError('lastName')" class="small text-danger">{{ getMeError('lastName') }}</small> 
                             </div>
 
                             <div class="col-12 mt-2">
                                      <label class="form-label text-muted small fw-medium mb-1">Location</label>
-                                    <input v-model="userProfile.user.me.location" class="form-control form-control-sm" placeholder="Your location">
-        
+                                    <input v-model="userProfile.user.me.location" :class="{'is-invalid': getMeError('location')}" :title="getMeError('location')" class="form-control form-control-sm" placeholder="Your location">
+                                    <small v-if="getMeError('location')" class="small text-danger">{{ getMeError('location') }}</small>
                             </div>
                     </div>
 
@@ -212,6 +230,7 @@
 
 
              <!--Секция Info-->
+        <div v-if="userProfile.user.role === 'candidate'">
             <div class="header w-100 d-flex justify-content-between align-items-center bg-secondary rounded" style="margin-top: 50px;">
                     <h1 class="d-inline ms-2" style="color: honeydew;">Info</h1>
                     <div>
@@ -290,12 +309,29 @@
                             <p v-else-if="userAttribute.attribute?.type === 'boolean' && userAttribute?.value === false" disabled class="me-2 mb-0">{{ userAttribute?.value }}</p>
                              <p v-else-if="userAttribute.attribute?.type === 'boolean' && userAttribute?.value === ''" disabled class="me-2 mb-0">false</p>
                              
-                             <div v-if="userAttribute.attribute.type === 'period'">
+                             <div v-else-if="userAttribute.attribute.type === 'period'">
                                 <p class="mb-0">from: {{ userAttribute.value?.from }}</p>
                                 <p class="mb-2">to: {{ userAttribute.value?.to }}</p>
                              </div>
 
-                             <p v-if="userAttribute.value === ''" class="mb-0">Not Data</p>
+
+
+                                <div v-else-if="userAttribute.attribute.type === 'image'" class="position-relative rounded"> 
+                                    <div style="width: 80px; height: 80px;">
+                                        <div v-if="getAttributeUrl(userAttribute)" class="w-100 h-100">
+                                            <img class="w-100 h-100 rounded" :src="userAttribute.value" alt="">
+                                        </div>
+                                        <div v-else class="w-100 h-100 bg-dark rounded d-flex align-items-center"><p class="text-center" style="color: white;">There is no image</p></div>
+                                    </div>
+                                </div>
+
+                            <div v-else-if="userAttribute.attribute.type === 'one_of_many'">
+                                <p v-if="userAttribute.value" class="me-2 mb-0">{{ userAttribute.value }}</p>
+                                <p v-else class="me-2 mb-0">not selected</p>
+                            </div>
+
+
+                             <p v-if="userAttribute.value === '' && userAttribute.attribute.type !== 'image'" class="mb-0">Not Data</p>
                             
                         </div>
                     </div>
@@ -310,21 +346,68 @@
                     <div v-for="userAttribute in userProfile.user.attributes" :key="id">
                         <div class="row rounded mt-2">
 
-                            <div class="col-6">
+                            <div class="col-6 d-flex align-items-center">
                                 <input type="checkbox" class="me-2" :value="userAttribute" v-model="selectedAttributes">
                                 <label class="">{{ userAttribute.attribute.name }}</label>
                             </div>
 
                             <div class="col-6">
                                 <input v-if="userAttribute.attribute.type === 'string'" type="text" v-model="userAttribute.value" class="form-control form-control-sm col-6 me-2">
-                                <textarea v-else-if="userAttribute.attribute.type === 'text'" v-model="userAttribute.value" class="me-1"></textarea>
+                                <textarea v-else-if="userAttribute.attribute.type === 'text'"  v-model="userAttribute.value" class="me-1"></textarea>
                                 <input v-else-if="userAttribute.attribute.type === 'string'" type="text" v-model="userAttribute.value" class="form-control form-control-sm col-6 me-2">
-                                <input v-else-if="userAttribute.attribute.type === 'numeric'" type="number" min="0" @input="userAttribute.value = Math.max(0, userAttribute.value)" v-model="userAttribute.value" class="form-control form-control-sm col-6 me-2">
+                                <input v-else-if="userAttribute.attribute.type === 'numeric' && getAttributeError(userAttribute.attribute.id) !== true" :class="{'is-invalid': getAttributeError(userAttribute.attribute.id)}" type="number" min="0" @input="userAttribute.value = Math.max(0, userAttribute.value)" v-model="userAttribute.value" class="form-control form-control-sm col-6 me-2">
+                                <div v-else-if="userAttribute.attribute.type === 'numeric' && getAttributeError(userAttribute.attribute.id) === true">
+                                    <input  type="number" min="0" @input="userAttribute.value = Math.max(0, userAttribute.value)" v-model="userAttribute.value" class="form-control form-control-sm col-6 me-2 is-invalid" title="">
+                                        
+                                </div> 
                                 <input v-else-if="userAttribute.attribute.type === 'date'" type="date" v-model="userAttribute.value" class="form-control form-control-sm col-6 me-2">
                                 <input v-else-if="userAttribute.attribute.type === 'boolean'" type="checkbox" v-model="userAttribute.value" class="form-check form-check-input col-6 me-2">
-                                <div>
-                                    <input v-if="userAttribute.attribute.type === 'period'" type="date" v-model="userAttribute.value.from">
-                                    <input v-if="userAttribute.attribute.type === 'period'" :min="userAttribute.value.from" type="date" v-model="userAttribute.value.to">
+                                <div v-else-if="userAttribute.attribute.type === 'period'">
+                                    <input  type="date" v-model="userAttribute.value.from">
+                                    <input :min="userAttribute.value.from" type="date" v-model="userAttribute.value.to">
+                                </div>
+
+                                <div  @click="initAttributeFlow" v-else-if="userAttribute.attribute.type === 'image'" class="position-relative rounded"> 
+                                    <div class="position-relative" style="width: 80px; height: 80px;">
+                                        <div v-if="getAttributeUrl(userAttribute)" class="w-100 h-100">
+                                            <img class="w-100 h-100 rounded" :src="userAttribute.value" alt="">
+                                            <div class="position-absolute w-100 h-100 top-0 bg-dark opacity-50"><p class="text-center" style="color: white;">Click or drag to change</p></div>
+
+                                        
+                                        </div>
+                                        <div v-else class="w-100 h-100 bg-dark rounded d-flex align-items-center"><p class="text-center" style="color: white;">Upload the photo</p></div>
+                                            
+                                        <uc-file-uploader-regular
+                                            class="area position-absolute top-0 start-0"
+                                        
+                                            @dragenter.prevent=""
+                                            @dragover.prevent
+                                            @drop.prevent="initAttributeFlow"
+                                            @dragleave=""
+                                            @mouseenter=""
+                                            @mouseleave=""
+                                            ctx-name="my-attribute-uploader"
+                                           headless
+                                        >
+                                        </uc-file-uploader-regular>
+
+                                    </div>
+
+
+                                      
+                                </div>
+
+                                <div v-if="userAttribute.attribute.type === 'one_of_many'">
+                                    <select v-model="userAttribute.value">
+                                        <option v-for="option in userAttribute.attribute.options" :key="option" :value="option">
+                                            {{ option }}
+                                        </option>
+                                    </select>
+                                </div>
+
+
+
+                                    
                                 </div>
                             </div>
 
@@ -332,10 +415,11 @@
                     </div>
                 </div>
             </div>
+            </div>
         </div>
         </div>
         
-    </div>
+    
     
     
 </template>
@@ -350,8 +434,10 @@ import '@uploadcare/file-uploader/web/uc-cloud-image-editor.min.css';
 import { useUserProfileStore } from '@/stores/UserProfileStore.js';
 import { useAttributeStore } from '@/stores/AttributeStore.js';
 
+
 const avatarUrl = ref('https://static.vecteezy.com/system/resources/previews/069/428/996/large_2x/default-profile-picture-social-media-icon-user-avatar-isolated-symbol-on-white-background-illustration-vector.jpg');
 let api;
+let attributeApi;
 import axios from '../services/api.js'
 const isNotLoad = ref(true);
 const user = ref(null);
@@ -362,11 +448,14 @@ const attributeStore = useAttributeStore();
 const selectedAttributes = ref([]);
 const errorMessage = ref('');
 const sucessfully = ref(false);
+const attributeUrl = ref('');
+
 onMounted(async () => {
 
     console.log("UserAttribute" ,userProfile.user.attributes);
     for (const attribute of userProfile.user.attributes) {
         if (attribute.attribute.type === 'boolean'){
+            
             console.log("С бэка пришло", attribute.value);
         } 
 
@@ -390,7 +479,13 @@ onMounted(async () => {
         return;
     }
     const ctxAvatar = document.querySelector('#avatar-uploader-ctx');
+     console.log('ctxAvatar:', ctxAvatar);
     api = ctxAvatar.getAPI();
+
+    const ctxAttribute = document.querySelector('#attribute-uploader-ctx');
+    console.log('attributeCtx:', ctxAttribute);
+    attributeApi = ctxAttribute.getAPI();
+    
 
     api.on('file-upload-success', (file) => {
         userProfile.user.me.avatarUrl = file.cdnUrl;
@@ -411,8 +506,9 @@ onMounted(async () => {
         }
     });
 
-
-
+    attributeApi.on('file-upload-success', (file) => {
+        attributeUrl.value = file.cdnUrl;
+    })
    }     
 );
 
@@ -435,6 +531,12 @@ function openOrClosingEditing(){
 function initFlow(){
     api.initFlow();
 }
+
+function initAttributeFlow() {
+   
+    attributeApi.initFlow();
+}
+
 
 const onAvatar = ref(false);
 
@@ -476,23 +578,31 @@ function handleFile(event){
 let timer = null;
 
 const isSave = ref(false);
+const errors = ref([]);
 
 const saveProfileData = async () => {
     try{
+        const responseAttribute = [];
+        userProfile.user.attributes.forEach(attribute => {
+            responseAttribute.push({
+                'attributeId': attribute.attribute.id,
+                'value': attribute.value,
+                'options': attribute.attribute.options
+            });
+        });
         const response = {
            'me': userProfile.user.me,
-           'attributes': userProfile.user.attributes
+           'attributes': responseAttribute
         }
         console.log("Отправляется: ", response);
 
-        await axios.patch('/api/profile/me', {
-            'me': userProfile.user.me,
-            'attributes': userProfile.user.attributes
-        });
+        await axios.patch('/api/profile/me', response);
         sucessfully.value = true;
+        errors.value = [];
     } catch(error) {
-        if (error.response?.data?.message){
-            errorMessage.value = error.response.data.message
+        if (error.response?.data?.status){
+            errorMessage.value = error.response.data.status
+            errors.value = error.response.data.errors
         } else{
             errorMessage.value = "Server error, please try again later";
         }
@@ -528,10 +638,35 @@ console.log(userProfile.user.attributes);
 });
 
 function addAttribute(attribute){
+    if (attribute.type === 'boolean'){
+        userProfile.user.attributes.push({
+            attribute,
+            value: false
+        });
+    } else if (attribute.type === 'period'){
+        userProfile.user.attributes.push({
+            attribute,
+            value: {
+                from: "",
+                to: ''
+            }
+        })
+    } else if (attribute.type === 'one_of_many'){
+        userProfile.user.attributes.push({
+            attribute,
+            value: null
+        })
+    }else if (attribute.type === 'numeric'){
+        userProfile.user.attributes.push({
+            attribute,
+            value: 1  
+        })
+    } else {
     userProfile.user.attributes.push({
         attribute,
         value: ''
     });
+   }
 }
 
 function addSelectedAttributes() {
@@ -557,6 +692,31 @@ function deleteAttributes(){
     }
 
     selectedAttributes.value = [];
+}
+
+function getAttributeError(attributeId){
+    return errors.value.find(
+        error => error.attributeId === attributeId
+    )
+}
+
+function getMeError(field){
+    return errors.value.find(
+        error => error.field === field
+    )?.message
+}
+
+function getAttributeUrl(attribute){
+    if (attribute.value !== "" && attributeUrl.value === ""){
+        return true;
+    }
+    if (attributeUrl.value !== ""){
+        attribute.value = attributeUrl.value;
+        return true;
+    } else{
+        return false;
+    }
+    
 }
 
 watch(() => userProfile.user,
@@ -608,5 +768,9 @@ watch(() => userProfile.user.attributes,
 .toast-fade-leave-to {
   opacity: 0;
   transform: translateY(20px); 
+}
+
+.uc-visual-drop-area{
+    height: 200px !important;
 }
 </style>

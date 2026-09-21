@@ -38,6 +38,9 @@ class Attributes
     #[ORM\OneToMany(mappedBy: 'attribute', targetEntity: UserAttribute::class)]
     private Collection $userAttributes;
 
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $options = null; 
+
     public function __construct()
     {
         $this->userAttributes = new ArrayCollection();
@@ -117,6 +120,15 @@ class Attributes
     {
         $this->updatedAt = $updatedAt;
 
+        return $this;
+    }
+
+    public function getOptions(): ?array{
+        return $this->options;
+    }
+    public function setOptions(array $options){
+        $this->options = $options;
+        
         return $this;
     }
 }

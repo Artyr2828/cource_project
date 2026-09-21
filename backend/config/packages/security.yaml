@@ -36,7 +36,9 @@ security:
     # Note: Only the *first* matching rule is applied
     access_control:
        # { path: ^/admin, roles: ROLE_ADMIN }
-       -    { path: ^/api/profile, roles: ROLE_CANDIDATE }
+       -    { path: ^/api/profile/me, roles: [ROLE_CANDIDATE, ROLE_RECRUITER, ROLE_ADMIN], methods: [GET] }
+       -    { path: ^/api/profile/me, roles: [ROLE_CANDIDATE, ROLE_ADMIN], methods: [PATCH] }
+       -    { path: ^/api/position, roles: [ROLE_RECRUITER, ROLE_ADMIN], methods: [POST] }
 
 when@test:
     security:

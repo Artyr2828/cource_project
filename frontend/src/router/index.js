@@ -17,6 +17,18 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/dashboard',
+      name: 'dashboard',
+      component: () => import('../views/DashboardView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/positions',
+      name: 'positions',
+      component: () => import('../views/PositionView.vue'),
+      meta: {requiresAuth: false}
+    },
+    {
       path: '/register',
       name: 'register',
       component: () => import('../views/RegistrationView.vue')
@@ -39,15 +51,22 @@ router.beforeEach(async (to, from) => {
     return true
   }
 
-  try {
-    await api.get('/api/profile/me');
-    return true;
-  } catch (error) {
+  if (to.name === "profile"){
+    try {
+      await api.get('/api/profile/me');
+      return true;
+    } catch (error) {
        return { 
         name: 'login',
         query: {error: "Access to the profile page is prohibited for unauthorized users"}
       }
   }
+}
+
+  if (to.name === "dashboard"){
+    console.log("Здесь должен получить данные");
+}
+
 })
 
 export default router

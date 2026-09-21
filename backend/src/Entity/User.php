@@ -132,10 +132,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     public function getProfile(): array{
-        $profile = [
-            'me' => $this->profile,  
-            'attributes' => $this->attributes
-        ];
+        if ($this->role === UserRole::CANDIDATE){
+            $profile = [
+                'me' => $this->profile,  
+                'attributes' => $this->attributes,
+                'role' => $this->role
+            ];
+        } else if ($this->role === UserRole::RECRUITER){
+            $profile = [
+                'me' => $this->profile,
+                'role' => $this->role
+            ];
+        }
         return $profile;
     }
 }

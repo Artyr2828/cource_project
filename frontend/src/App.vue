@@ -5,6 +5,7 @@
       <div class="links d-flex align-items-center">
         <RouterLink class="text-decoration-none me-4" to="/login"><p class="mb-0">Sign in</p></RouterLink>
         <RouterLink class="text-decoration-none me-4" to="/profile"><p class="mb-0">Profile</p></RouterLink>
+        <RouterLink class="text-decoration-none me-4" to="/positions"><p class="mb-0">Positions</p></RouterLink>
        
       </div>
 
@@ -22,12 +23,18 @@
 </template>
 
 <script setup>
-import {useUserProfileStore} from '@/stores/UserProfileStore.js'
 import { onMounted } from 'vue';
+import { useUserProfileStore } from '@/stores/UserProfileStore.js';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 const useUserProfile = useUserProfileStore();
+if (router.currentRoute.value.meta.requiresAuth){
+   useUserProfile.fetchProfile();
+}
 
 onMounted(() => {
-  useUserProfile.fetchProfile();
+  
 });
 
 

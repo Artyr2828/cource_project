@@ -14,10 +14,18 @@ use App\Repository\AttributesRepository;
 use App\Repository\UserAttributeRepository;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Service\ValidateValueUserAttribute;
+use App\Service\ValidateUserMeSection;
 
 final class UserProfileController extends AbstractController
 {
-    public function __construct(private EntityManagerInterface $entityManager, private AttributesRepository $attributesRepository, private UserAttributeRepository $userAttributeRepository){}
+    public function __construct(
+        private EntityManagerInterface $entityManager,
+        private AttributesRepository $attributesRepository,
+        private UserAttributeRepository $userAttributeRepository,
+        private ValidateValueUserAttribute $validateValueUserAttribute,
+        private ValidateUserMeSection $validateUserMeSection
+    ){}
 
 
     #[Route('/api/profile/me', name: 'app_user_profile', methods: ['PATCH'])]
@@ -25,9 +33,11 @@ final class UserProfileController extends AbstractController
     {
         /** @var \App\Entity\User $user */
         $user = $this->getUser();
-        return $this->json(["status" => "work"]);
         
-        if (!empty($dto->attributes)){
+        $this->validateUserMeSection->validate($dto->me);
+        $attributes = $this->validateValueUserAttribute->validate($dto->attributes);
+        //dd($attributes);
+        if (!empty($attributes)){
             $userAttributes = $this->userAttributeRepository->findBy([
                 'user' => $user
             ]);
@@ -40,15 +50,17 @@ final class UserProfileController extends AbstractController
 
             
 
-            foreach ($dto->attributes as $attribute) {
-                $attributeId = $attribute['attribute']['id'];
+            foreach ($attributes as $attribute) {
+                
+                $attributeId = $attribute->attribute->getId();
+                
                 if (isset($existingByAttributeId[$attributeId])) {
                     $userAttribute = $existingByAttributeId[$attributeId];
-                    if (is_array($attribute['value'])){
-                        $attributeJson = json_encode($attribute['value'], JSON_THROW_ON_ERROR);
+                    if (is_array($attribute->value)){
+                        $attributeJson = json_encode($attribute->value, JSON_THROW_ON_ERROR);
                         $userAttribute->setValue($attributeJson);
                     } else{
-                        $userAttribute->setValue($attribute['value']);
+                        $userAttribute->setValue($attribute->value);
                     }
                     unset($existingByAttributeId[$attributeId]);
                     continue;
@@ -58,11 +70,11 @@ final class UserProfileController extends AbstractController
 
                 $userAttribute->setUser($user);
                 $userAttribute->setAttribute($attributeObj);
-                if (is_array($attribute['value'])){
-                    $attributeJson = json_encode($attribute['value'], JSON_THROW_ON_ERROR);
+                if (is_array($attribute->value)){
+                    $attributeJson = json_encode($attribute->value, JSON_THROW_ON_ERROR);
                     $userAttribute->setValue($attributeJson);
                 } else{
-                    $userAttribute->setValue($attribute['value']);
+                    $userAttribute->setValue($attribute->value);
                 }
                 $user->addToAttributes($userAttribute);
                 $this->entityManager->persist($userAttribute);
@@ -73,14 +85,19 @@ final class UserProfileController extends AbstractController
         } 
 
         $profile = $user->getProfile();
-
-        $profile = $profile['me']->updateFromDto($dto->me);
+        if ($dto->me !== null){
+            $profile['me']->updateFromDto($dto->me);
+        }
         $this->entityManager->flush();
         return $this->json([
             'status'=>'ok',
-            'dto'=>$dto
-        ]);
+            'attributes'=>$attributes,
+            'me'=>$profile['me']
+        ], 200);
     }
+
+
+
     #[Route('/api/profile/me', name: 'app_user_profile_get', methods: ['GET'])]
     public function get(): Response{
           /** @var \App\Entity\User $user */

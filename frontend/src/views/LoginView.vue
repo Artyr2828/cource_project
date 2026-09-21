@@ -21,6 +21,7 @@ import axios from 'axios';
 import api from '../services/api.js';
 import { useRouter, useRoute } from 'vue-router';
 import { onMounted } from 'vue';
+import {useUserProfileStore} from '@/stores/UserProfileStore.js'
 const router = useRouter();
 const route = useRoute();
 const email = ref('');
@@ -28,6 +29,7 @@ const password = ref('');
 const errorMessage = ref('');
 const isLoader = ref(false);
 const errorCount = ref(0);
+const useUserProfile = useUserProfileStore();
 
 const error = computed(() => route.query.error);
 
@@ -58,7 +60,14 @@ async function login() {
             email: email.value,
             password: password.value
         });
-        router.push('/profile');
+        await useUserProfile.fetchProfile();
+        if (useUserProfile.user.role === 'candidate'){
+            router.push('/profile');
+        } else if (useUserProfile.user.role === 'recruiter') {
+            router.push('/dashboard');
+        } else{
+            console.log(useUserProfile.user);
+        }
     } catch (error) {
         if (error.request) {
             if (error.response === undefined) {
