@@ -57,9 +57,11 @@ router.beforeEach(async (to, from) => {
       await api.get('/api/profile/me');
       return true;
     } catch (error) {
-       return { 
-        name: 'login',
-        query: {error: "Access to the profile page is prohibited for unauthorized users"}
+      console.log(error);
+      return;
+      // return { 
+       // name: 'login',
+       // query: {error: "Access to the profile page is prohibited for unauthorized users"}
       }
   }
 }
