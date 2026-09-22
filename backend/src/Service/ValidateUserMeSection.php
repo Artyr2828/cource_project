@@ -25,9 +25,9 @@ class ValidateUserMeSection {
 
     }
 
-    private function validateFirstName(string $firstName): string {
+    private function validateFirstName(?string $firstName): string {
 
-        if ($firstName === '') {
+        if ($firstName === '' || $firstName === null) {
             return 'The first name must not be empty';
         }
 
@@ -38,8 +38,8 @@ class ValidateUserMeSection {
         return '';
     }
 
-    private function validateLastName(string $lastName): string {
-        if ($lastName === '') {
+    private function validateLastName(?string $lastName): string {
+        if ($lastName === '' || $lastName === null) {
             return 'The last name must not be empty';
         }
 
@@ -51,8 +51,8 @@ class ValidateUserMeSection {
     }
 
         
-    private function validateLocation(string $location): string {
-        if ($location === '') {
+    private function validateLocation(?string $location): string {
+        if ($location === '' || $location === null) {
             return 'The location must not be empty';
         }
 

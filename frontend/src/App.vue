@@ -13,7 +13,7 @@
     </div>
   </header>
 
-  <main>
+  <main class="min-vh-100">
    
       <RouterView />
     
@@ -25,14 +25,12 @@
 <script setup>
 import { onMounted } from 'vue';
 import { useUserProfileStore } from '@/stores/UserProfileStore.js';
-import { useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 
-const router = useRouter();
-const useUserProfile = useUserProfileStore();
-if (router.currentRoute.value.meta.requiresAuth){
-   useUserProfile.fetchProfile();
-}
+const route = useRoute();
+const userProfile = useUserProfileStore();
 
+userProfile.fetchProfile();
 onMounted(() => {
   
 });

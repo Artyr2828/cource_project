@@ -14,6 +14,29 @@ class PositionEntityRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, PositionEntity::class);
+        
+    }
+
+    public function findPaginated(?int $before, ?int $after, int $limit){
+        $qb = $this->createQueryBuilder('p')->setMaxResults($limit + 1);
+
+        if ($after !== 0){
+            $qb = $qb->andWhere('p.id > :after')
+            ->setParameter('after', $after)
+            ->orderBy('p.id', 'ASC');
+        } else if ($before !== 0){
+            $qb = $qb->andWhere('p.id < :before')
+            ->setParameter('before', $before)
+            ->orderBy('p.id', 'DESC');
+        } else {
+            $qb = $qb->orderBy('p.id', 'ASC'); 
+        }
+        $positions = $qb->getQuery()->getResult();
+
+        if ($before !== 0) {
+            $positions = array_reverse($positions);
+        }
+        return $positions;
     }
 
     //    /**

@@ -27,6 +27,7 @@ security:
             stateless: true
             provider: app_user_provider
             jwt: true
+            entry_point: App\Security\AuthenticationEntryPoint
             # Activate different ways to authenticate:
             # https://symfony.com/doc/current/security.html#the-firewall
 

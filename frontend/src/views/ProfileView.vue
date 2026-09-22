@@ -51,7 +51,7 @@
             <!--Секция Me-->
             <div class="header w-100 d-flex justify-content-between bg-secondary rounded" style="margin-top: 50px;">
                     <h1 class="d-inline ms-2" style="color: honeydew;">Me</h1>
-                    <button @click="openOrClosingEditing" class="btn  btn-sm bi-pencil d-inline-flex align-self-center p-2 me-2 btn-warning"></button>
+                    <button v-if="userProfile.user.role === 'candidate'" @click="openOrClosingEditing" class="btn  btn-sm bi-pencil d-inline-flex align-self-center p-2 me-2 btn-warning"></button>
             </div>
 
             <div v-if="isEditing" class="bg-light rounded ps-2 pt-3">
@@ -123,7 +123,7 @@
 
 
 
-            <div v-else="isEditing" class="bg-light rounded ps-2 pt-3">
+            <div v-else class="bg-light rounded ps-2 pt-3">
             
                 <div class="d-flex flex-column">
                     
@@ -228,9 +228,8 @@
                 </div>
             </Transition>
 
-
-             <!--Секция Info-->
         <div v-if="userProfile.user.role === 'candidate'">
+             <!--Секция Info-->
             <div class="header w-100 d-flex justify-content-between align-items-center bg-secondary rounded" style="margin-top: 50px;">
                     <h1 class="d-inline ms-2" style="color: honeydew;">Info</h1>
                     <div>
@@ -294,7 +293,7 @@
 
 
 
-        <div v-if="isEditing">
+        <div v-if="isEditing ">
              <div class="bg-light rounded ps-2 pt-3">
                 <div class="d-flex flex-column bg-light">
                     <div v-for="userAttribute in userProfile?.user?.attributes" :key="userAttribute.id">
@@ -442,7 +441,8 @@ import axios from '../services/api.js'
 const isNotLoad = ref(true);
 const user = ref(null);
 const userProfile = useUserProfileStore();
-const isEditing = ref(true);
+const isEditing = ref(false);
+
 const isModalAttributesOpen = ref(false);
 const attributeStore = useAttributeStore();
 const selectedAttributes = ref([]);
@@ -451,8 +451,11 @@ const sucessfully = ref(false);
 const attributeUrl = ref('');
 
 onMounted(async () => {
-
+    if (userProfile.user.role === 'recruiter'){
+        isEditing.value = true;
+    }
     console.log("UserAttribute" ,userProfile.user.attributes);
+    if (userProfile.user.role === 'candidate'){
     for (const attribute of userProfile.user.attributes) {
         if (attribute.attribute.type === 'boolean'){
             
@@ -464,6 +467,7 @@ onMounted(async () => {
             console.log("С бэка пришло", attribute.value);
             
         }
+    }
     }
     
     if (!userProfile.user) {
@@ -732,6 +736,7 @@ watch(() => userProfile.user,
 },
   {deep: true});
 
+if (userProfile.user.role === 'candidate'){
 watch(() => userProfile.user.attributes, 
 (attributes) => {
     for (const attribute of attributes){
@@ -742,7 +747,7 @@ watch(() => userProfile.user.attributes,
         }
     }
 }, {deep: true});
-
+}
 </script>
 
 <style scoped>

@@ -6,13 +6,24 @@ use Symfony\Component\RateLimiter\RateLimiterFactory;
 
 class RateLimitService{
     public function __construct(
-        private RateLimiterFactory $loginLimiter
+        private RateLimiterFactory $loginLimiter,
+        private RateLimiterFactory $apiLimiter,
+        private RateLimiterFactory $positionCreateLimiter
     ){}
 
-    public function enforce(string $email, string $clientIp): void
+    public function enforce(string $email, string $clientIp, string $typeOfLimiter): void
     {
-        $key = sprintf('login_%s_%s', $email, $clientIp);
-        $limiter = $this->loginLimiter->create($key);
+        $key = sprintf('%s_%s_%s', $typeOfLimiter, $email, $clientIp);
+        if ($typeOfLimiter === 'login'){
+            $limiter = $this->loginLimiter->create($key);
+        } else if ($typeOfLimiter === 'api'){
+            $limiter = $this->apiLimiter->create($key);
+        } else if ($typeOfLimiter === 'positionCreate'){
+            $limiter = $this->positionCreateLimiter->create($key);
+        } 
+        else {
+             throw new \InvalidArgumentException('Unknown limiter type');
+        }
         $limiterResult = $limiter->consume(1);
 
         if ($limiterResult->isAccepted() === false) {

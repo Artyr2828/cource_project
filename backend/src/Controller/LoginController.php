@@ -23,7 +23,7 @@ class LoginController extends AbstractController
     #[Route(path: '/api/login', name: 'app_login')]
     public function login(#[MapRequestPayload] LoginUserRequest $dto, Request $request): Response
     {
-        $this->rateLimitService->enforce($dto->email, $request->getClientIp());
+        $this->rateLimitService->enforce($dto->email, $request->getClientIp(), 'login');
         $jwt = $this->loginService->login($dto, $request->getClientIp());
         $response = $this->json(['status' => 'ok'], Response::HTTP_OK);
         $response->headers->setCookie(Cookie::create('BEARER', $jwt, 0, '/', null, true, true, false, 'Strict'));

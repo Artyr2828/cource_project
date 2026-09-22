@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import api from '../services/api.js'
 import { errorMessages } from 'vue/compiler-sfc'
 
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [

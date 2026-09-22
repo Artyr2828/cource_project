@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import api from '../services/api.js';
 
+
 export const useAttributeStore = defineStore('attribute', () => {
     const attributes = ref(null);
     const errorMessage = ref('');
@@ -18,6 +19,10 @@ export const useAttributeStore = defineStore('attribute', () => {
             attributes.value = response.data;
             
         } catch (error) {
+            
+            if (error.response.code = 401){
+                
+            }
             if (!error.response){
                  errorMessage.value = "Server issues—please try again later";
             }else{
