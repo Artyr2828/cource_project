@@ -25,7 +25,7 @@ class RegistrationController extends AbstractController
         $this->rateLimitService->enforce($dto->email, $request->getClientIp(), 'login');
         $token = $this->serviceRegistration->register($dto);
         $response = $this->json(['status' => 'ok'], 201);
-        $response->headers->setCookie(Cookie::create('BEARER', $token, 0, '/', null, true, true, false, 'Strict'));
+        $response->headers->setCookie(Cookie::create('BEARER', $token, 0, '/', null, true, true, false, 'None'));
         return $response;
     }
 
