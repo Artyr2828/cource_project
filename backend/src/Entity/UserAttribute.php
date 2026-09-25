@@ -10,6 +10,7 @@ use Symfony\Component\Serializer\Attribute\Ignore;
 use Symfony\Component\Validator\Constraints\Cascade;
 use App\Entity\Attributes;
 use App\Enums\AttributeType;
+use App\Entity\Profile;
 
 #[ORM\Entity(repositoryClass: UserAttributeRepository::class)]
 class UserAttribute
@@ -19,14 +20,14 @@ class UserAttribute
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(inversedBy: 'attributes', targetEntity: User::class)]
-    #[JoinColumn('user_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
-    #[Ignore]
-    private ?User $user = null;
-
     #[ORM\ManyToOne(inversedBy: 'userAttributes', targetEntity: Attributes::class)]
     #[ORM\JoinColumn('attribute_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     private ?Attributes $attribute = null;
+    
+    #[Ignore]
+    #[ORM\ManyToOne(inversedBy: 'attributes', targetEntity: Profile::class)]
+    #[ORM\JoinColumn('profile_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
+    private ?Profile $profile = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $value = null;
@@ -35,18 +36,17 @@ class UserAttribute
     {
         return $this->id;
     }
-
-    public function getUser(): ?User
-    {
-        return $this->user;
+    
+    public function getProfile(): ?Profile{
+        return $this->profile;
     }
 
-    public function setUser(User $user): static
-    {
-        $this->user = $user;
+    public function setProfile(Profile $profile): static {
+        $this->profile = $profile;
 
         return $this;
     }
+
 
     public function getAttribute(): ?Attributes
     {

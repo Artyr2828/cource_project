@@ -2,10 +2,11 @@
 namespace App\Service;
 use App\DTO\PositionDto; 
 use App\Exceptions\PosititonDataValidationException;
+use App\Interfaces\PositionDtoInterface;
 
-class ValidatePositionData {
+class ValidatePositionBasicData {
 
-    public function validate(PositionDto $dto){
+    public function validate(PositionDtoInterface $dto){
         $errors = [];
 
         $errorMess = $this->validateName($dto->name);

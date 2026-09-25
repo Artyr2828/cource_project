@@ -37,7 +37,12 @@ class ValidateValueUserAttribute {
              $attributeMap[$attributeEntity->getId()] = $attributeEntity;
         }
 
+        $processedAttributeIds = [];
+
         foreach ($attributes as $attribute){
+            if (in_array($attribute->attributeId, $processedAttributeIds, true)){
+                throw new BadRequestHttpException("Duplicate Attribute");
+            }
             $attributeEntity = $attributeMap[$attribute->attributeId];
             $userValidAttribute = new UserValidAttributes($attributeEntity, $attribute->value);
             $attributeResponse[] = $userValidAttribute;
@@ -75,6 +80,7 @@ class ValidateValueUserAttribute {
                     $errorMess = $this->validateOneOfMany($attribute->value, $attribute->options);
                     $this->addValidationError($errors, $attribute->attributeId, $errorMess);
             }
+            $processedAttributeIds[] = $attribute->attributeId;
         }
         if (!empty($errors)){
             throw new AttributeValidationException($errors);

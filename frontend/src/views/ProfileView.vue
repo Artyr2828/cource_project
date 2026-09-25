@@ -4,7 +4,7 @@
     rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@v1/web/uc-file-uploader-minimal.min.css"
 />
-    <div class="container p-2 pt-3">
+    <div v-if="userProfile.user !== null && userProfile.isLoading !== true" class="container p-2 pt-3">
         <div class="container d-flex align-items-start gap-3 p-2 rounded" style="height: 100px; background-color: antiquewhite;" >
             <img v-if="isNotLoad" :src="userProfile.user?.me?.avatarUrl" alt="" class="rounded object-fit-cover" style="height: 100%; width: auto; object-fit: cover;">
             <img v-else="isNotLoad" src="https://media1.tenor.com/m/P3jIMIC96psAAAAC/ggg.gif" alt="" class="rounded" style="max-height: 100%; width: auto; object-fit: cover;">
@@ -51,7 +51,7 @@
             <!--Секция Me-->
             <div class="header w-100 d-flex justify-content-between bg-secondary rounded" style="margin-top: 50px;">
                     <h1 class="d-inline ms-2" style="color: honeydew;">Me</h1>
-                    <button v-if="userProfile.user.role === 'candidate'" @click="openOrClosingEditing" class="btn  btn-sm bi-pencil d-inline-flex align-self-center p-2 me-2 btn-warning"></button>
+                    <button v-if="userProfile.user?.role === 'candidate'" @click="openOrClosingEditing" class="btn  btn-sm bi-pencil d-inline-flex align-self-center p-2 me-2 btn-warning"></button>
             </div>
 
             <div v-if="isEditing" class="bg-light rounded ps-2 pt-3">
@@ -228,7 +228,7 @@
                 </div>
             </Transition>
 
-        <div v-if="userProfile.user.role === 'candidate'">
+        <div v-if="userProfile.user?.role === 'candidate'">
              <!--Секция Info-->
             <div class="header w-100 d-flex justify-content-between align-items-center bg-secondary rounded" style="margin-top: 50px;">
                     <h1 class="d-inline ms-2" style="color: honeydew;">Info</h1>
@@ -417,7 +417,38 @@
             </div>
         </div>
         </div>
-        
+        <div v-else class="container d-flex justify-content-center align-items-center min-vh-100">
+            <uc-config
+                ctx-name="my-avatar-uploader"
+                pubkey="6a5a21105b2bdff19cda"
+                img-only="true"
+                multiple="false"
+                use-cloud-image-editor="true"
+            ></uc-config>
+
+           <uc-config
+                ctx-name="my-attribute-uploader"
+                pubkey="6a5a21105b2bdff19cda"
+                img-only="true"
+                multiple="false"
+                use-cloud-image-editor="true"
+            ></uc-config>
+
+            <uc-upload-ctx-provider
+                id="avatar-uploader-ctx"
+                ctx-name="my-avatar-uploader"
+               
+            ></uc-upload-ctx-provider>
+                        
+            <uc-upload-ctx-provider
+                id="attribute-uploader-ctx"
+                ctx-name="my-attribute-uploader"
+               
+            ></uc-upload-ctx-provider>
+            <div class="">
+                <span class="spinner-border" style="width: 50px; height: 50px;"></span>
+            </div>
+        </div>
     
     
     
@@ -432,14 +463,11 @@ UCEditor.defineComponents(UCEditor);
 import '@uploadcare/file-uploader/web/uc-cloud-image-editor.min.css';
 import { useUserProfileStore } from '@/stores/UserProfileStore.js';
 import { useAttributeStore } from '@/stores/AttributeStore.js';
-
-
-const avatarUrl = ref('https://static.vecteezy.com/system/resources/previews/069/428/996/large_2x/default-profile-picture-social-media-icon-user-avatar-isolated-symbol-on-white-background-illustration-vector.jpg');
 let api;
 let attributeApi;
 import axios from '../services/api.js'
+import { useRouter } from 'vue-router';
 const isNotLoad = ref(true);
-const user = ref(null);
 const userProfile = useUserProfileStore();
 const isEditing = ref(false);
 
@@ -449,22 +477,44 @@ const selectedAttributes = ref([]);
 const errorMessage = ref('');
 const sucessfully = ref(false);
 const attributeUrl = ref('');
+const router = useRouter();
+const version = ref(null);
+const isFirstLoad = ref(true);
 
 onMounted(async () => {
-    if (userProfile.user.role === 'recruiter'){
+    try {
+        await userProfile.fetchProfile();
+        version.value = userProfile.user.version;
+    } catch (error) {
+        
+        if (error.response?.status === 401) {
+            router.push({
+                path: '/login',
+                query: {
+                    error: 'Access to the profile page is prohibited for unauthorized users'
+                }
+            });
+        }
+    } finally {
+        userProfile.isLoading = false;
+    }
+
+    
+
+    if (userProfile.user?.role === 'recruiter'){
         isEditing.value = true;
     }
-    console.log("UserAttribute" ,userProfile.user.attributes);
-    if (userProfile.user.role === 'candidate'){
+    
+    if (userProfile.user?.role === 'candidate'){
     for (const attribute of userProfile.user.attributes) {
         if (attribute.attribute.type === 'boolean'){
             
-            console.log("С бэка пришло", attribute.value);
+            
         } 
 
         if (attribute.attribute.type === 'period'){
         
-            console.log("С бэка пришло", attribute.value);
+            
             
         }
     }
@@ -483,11 +533,9 @@ onMounted(async () => {
         return;
     }
     const ctxAvatar = document.querySelector('#avatar-uploader-ctx');
-     console.log('ctxAvatar:', ctxAvatar);
     api = ctxAvatar.getAPI();
-
+    
     const ctxAttribute = document.querySelector('#attribute-uploader-ctx');
-    console.log('attributeCtx:', ctxAttribute);
     attributeApi = ctxAttribute.getAPI();
     
 
@@ -584,6 +632,7 @@ let timer = null;
 const isSave = ref(false);
 const errors = ref([]);
 
+
 const saveProfileData = async () => {
     try{
         const responseAttribute = [];
@@ -594,20 +643,41 @@ const saveProfileData = async () => {
                 'options': attribute.attribute.options
             });
         });
+        
         const response = {
            'me': userProfile.user.me,
-           'attributes': responseAttribute
+           'attributes': responseAttribute,
+           'version': version.value
         }
         console.log("Отправляется: ", response);
 
-        await axios.patch('/api/profile/me', response);
+        const dataResponse = await axios.patch('/api/profile/me', response);
+        version.value = dataResponse.data.version 
+
         sucessfully.value = true;
         errors.value = [];
     } catch(error) {
-        if (error.response?.data?.status){
+        if (error.response?.status === 401) {
+            router.push({
+                path: '/login',
+                query: {
+                    error: 'Your session has expired. Please log in again to continue'
+                }
+            });
+        } else if (error.response?.status === 403){
+             router.push({
+                path: '/login',
+                query: {
+                    error: 'You do not have the permission to modify this profile'
+                }
+            });
+        } else if (error.response?.status === 409){
+            errorMessage.value = error.response.data.message;
+        }else if (typeof error.response?.data?.status === 'string'){
             errorMessage.value = error.response.data.status
             errors.value = error.response.data.errors
         } else{
+            console.log(error);
             errorMessage.value = "Server error, please try again later";
         }
         return;
@@ -729,14 +799,20 @@ watch(() => userProfile.user,
          clearTimeout(timer);
     }
 
+    if (isFirstLoad.value === true){
+        isFirstLoad.value = false;
+        return;
+    }
+
     timer = setTimeout(()=>{
-        
-        saveProfileData()
+        if (userProfile.user?.role === 'candidate'){
+            saveProfileData()
+        }
     }, 5000);
 },
   {deep: true});
 
-if (userProfile.user.role === 'candidate'){
+if (userProfile.user?.role === 'candidate'){
 watch(() => userProfile.user.attributes, 
 (attributes) => {
     for (const attribute of attributes){

@@ -5,17 +5,15 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\HttpFoundation\Request;
 use App\DTO\UpdateProfileDto;
-use App\Entity\Attributes;
 use App\Entity\UserAttribute;
-use App\Entity\UserProfile;
 use App\Repository\AttributesRepository;
 use App\Repository\UserAttributeRepository;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Service\ValidateValueUserAttribute;
 use App\Service\ValidateUserMeSection;
+use Doctrine\ORM\OptimisticLockException;
 
 final class UserProfileController extends AbstractController
 {
@@ -24,7 +22,7 @@ final class UserProfileController extends AbstractController
         private AttributesRepository $attributesRepository,
         private UserAttributeRepository $userAttributeRepository,
         private ValidateValueUserAttribute $validateValueUserAttribute,
-        private ValidateUserMeSection $validateUserMeSection
+        private ValidateUserMeSection $validateUserMeSection,
     ){}
 
 
@@ -33,13 +31,18 @@ final class UserProfileController extends AbstractController
     {
         /** @var \App\Entity\User $user */
         $user = $this->getUser();
-        
+        $profile = $user->getProfile();
+
+        if ($dto->version !== $profile->getVersion()){
+            throw new OptimisticLockException("Oops, your data is outdated. Refresh the page to get the latest data", null);
+        }        
+
         $this->validateUserMeSection->validate($dto->me);
         $attributes = $this->validateValueUserAttribute->validate($dto->attributes);
-        //dd($attributes);
+
         if (!empty($attributes)){
             $userAttributes = $this->userAttributeRepository->findBy([
-                'user' => $user
+                'profile' => $profile
             ]);
 
             $existingByAttributeId = [];
@@ -47,8 +50,6 @@ final class UserProfileController extends AbstractController
             foreach ($userAttributes as $userAttribute) {
                 $existingByAttributeId[$userAttribute->getAttribute()->getId()] = $userAttribute;
             }
-
-            
 
             foreach ($attributes as $attribute) {
                 
@@ -67,8 +68,9 @@ final class UserProfileController extends AbstractController
                 }
                 $attributeObj = $this->attributesRepository->find($attributeId);
                 $userAttribute = new UserAttribute();
+                
+                //$userAttribute->setUser($user);
 
-                $userAttribute->setUser($user);
                 $userAttribute->setAttribute($attributeObj);
                 if (is_array($attribute->value)){
                     $attributeJson = json_encode($attribute->value, JSON_THROW_ON_ERROR);
@@ -76,23 +78,26 @@ final class UserProfileController extends AbstractController
                 } else{
                     $userAttribute->setValue($attribute->value);
                 }
-                $user->addToAttributes($userAttribute);
+                $profile->addToAttributes($userAttribute);
                 $this->entityManager->persist($userAttribute);
             }
         foreach ($existingByAttributeId as $userAttribute) {
             $this->entityManager->remove($userAttribute);
         }           
-        } 
-
-        $profile = $user->getProfile();
-        if ($dto->me !== null){
-            $profile['me']->updateFromDto($dto->me);
+        } else {
+            $profile->getAttributes()->clear();
         }
+
+        $profile->getMe()->updateFromDto($dto->me);
+
+        $profile->setCreatedAt(new \DateTimeImmutable());
+
         $this->entityManager->flush();
         return $this->json([
             'status'=>'ok',
             'attributes'=>$attributes,
-            'me'=>$profile['me']
+            'me'=>$profile->getMe(),
+            'version'=>$profile->getVersion()
         ], 200);
     }
 
@@ -103,7 +108,12 @@ final class UserProfileController extends AbstractController
           /** @var \App\Entity\User $user */
         $user = $this->getUser();
         $profile = $user->getProfile();
-
-        return $this->json($profile);
+        $response = [
+            'me' => $profile->getMe(),
+            'attributes' => $profile->getAttributes(),
+            'role' => $user->getRole(),
+            'version' => $profile->getVersion()
+        ];
+        return $this->json($response);
     }
 }

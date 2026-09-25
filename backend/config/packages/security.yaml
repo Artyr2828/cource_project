@@ -40,6 +40,7 @@ security:
        -    { path: ^/api/profile/me, roles: [ROLE_CANDIDATE, ROLE_RECRUITER, ROLE_ADMIN], methods: [GET] }
        -    { path: ^/api/profile/me, roles: [ROLE_CANDIDATE, ROLE_ADMIN], methods: [PATCH] }
        -    { path: ^/api/position, roles: [ROLE_RECRUITER, ROLE_ADMIN], methods: [POST] }
+       -    { path: ^/api/position, roles: [ROLE_RECRUITER, ROLE_ADMIN], methods: [PATCH] }
 
 when@test:
     security:

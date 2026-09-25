@@ -8,7 +8,7 @@ export const usePositionStore = defineStore('position', () => {
     const positionPrevios = ref(null);
     const positionNext = ref(null);
     const errorMessage = ref('');
-    const isLoading = ref(false);
+    const isLoading = ref(true);
 
     async function fetchPosition(idPosition = null){
         isLoading.value = true;
@@ -61,7 +61,8 @@ export const usePositionStore = defineStore('position', () => {
             console.log("Position data successfully");
             
         } catch (error) {
-            //router.push('/login');
+           
+            
             console.log("Doxodit: ", error);
             if (!error.response){
                  errorMessage.value = "Server issues—please try again later";

@@ -61,7 +61,7 @@ async function register(event) {
       email: email.value,
       password: password.value
     });
-    await useUserProfile.fetchProfile();
+    useUserProfile.user = null;
     router.push('/profile');
   } catch (error) {
     if (error.request) {

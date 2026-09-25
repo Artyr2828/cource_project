@@ -55,13 +55,17 @@ async function login() {
     }
     isLoader.value = true;
     errorMessage.value = '';
+
+
     try {
         const response = await api.post('/api/login', {
             email: email.value,
             password: password.value
         });
+        useUserProfile.user = null;
         await useUserProfile.fetchProfile();
         if (useUserProfile.user.role === 'candidate'){
+            useUserProfile.user = null;
             router.push('/profile');
         } else if (useUserProfile.user.role === 'recruiter') {
             router.push('/dashboard');

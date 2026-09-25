@@ -9,6 +9,7 @@ use App\Entity\User;
 use Doctrine\DBAL\Types\Types;
 use App\DTO\UpdateProfileDto;
 use Symfony\Component\Serializer\Attribute\Ignore;
+use App\Entity\Profile;
 
 #[ORM\Entity(repositoryClass: UserProfileRepository::class)]
 class UserProfile
@@ -18,11 +19,6 @@ class UserProfile
     #[ORM\Column]
     private ?int $id = null;
 
-
-    #[ORM\OneToOne(inversedBy: 'profile', targetEntity: User::class)]
-    #[ORM\JoinColumn('user_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
-    #[Ignore]
-    private ?User $user = null;
 
     #[ORM\Column(length: 20, nullable: true)]
     private ?string $firstName = null;
@@ -36,10 +32,9 @@ class UserProfile
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $avatarUrl = null;
 
-
-    #[ORM\Column(type: Types::INTEGER, options: ['default' => 1])]
-    #[ORM\Version]
-    private int $version = 1;
+    #[ORM\OneToOne(mappedBy: 'me', targetEntity: Profile::class)]
+    #[Ignore]
+    private Profile $profile;
 
     public function getId(): ?int
     {
@@ -82,12 +77,6 @@ class UserProfile
         return $this;
     }
 
-    public function setUser(User $user): self{
-        $this->user = $user;
-
-        return $this;
-    }
-
     public function getAvatarUrl(): ?string
     {
         return $this->avatarUrl;
@@ -100,22 +89,16 @@ class UserProfile
         return $this;
     }
 
-    public function getUser(): ?User
-    {
-        return $this->user;
+    public function getProfile(): ?Profile {
+        return $this->profile;
     }
 
-    public function getVersion(): ?int
-    {
-        return $this->version;
-    }
-
-    public function setVersion(int $version): static
-    {
-        $this->version = $version;
+    public function setProfile(Profile $profile): static {
+        $this->profile = $profile;
 
         return $this;
     }
+
 
     public function updateFromDto(MeDto $meDto): self{
         if ($meDto->firstName !== null){
@@ -130,6 +113,7 @@ class UserProfile
         if ($meDto->avatarUrl !== null){
             $this->setAvatarUrl($meDto->avatarUrl);
         }
+        
         return $this;
     }
 }

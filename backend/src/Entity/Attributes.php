@@ -35,8 +35,6 @@ class Attributes
     #[ORM\Column(name: 'updated_at', nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
 
-    #[ORM\OneToMany(mappedBy: 'attribute', targetEntity: UserAttribute::class)]
-    private Collection $userAttributes;
 
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $options = null; 

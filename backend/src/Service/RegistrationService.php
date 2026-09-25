@@ -2,6 +2,7 @@
 namespace App\Service;
 use App\Entity\User;
 use App\DTO\RegisterUserRequest;
+use App\Entity\Profile;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
@@ -18,13 +19,16 @@ final class RegistrationService {
         private UserRepository $userRepository
     ){}
 
-    public function register(RegisterUserRequest $dto): string{
+    public function register(RegisterUserRequest $dto): string {
         $this->ensureUserDoesNotExist($dto->email);
         $user = $this->createEntityUser($dto);
-        $profile = new UserProfile();
-        $profile->setUser($user);
-        $this->sendToDatabase($user);
+        $me = new UserProfile();
+        $this->entityManager->persist($me);
+        $profile = new Profile();
         $this->entityManager->persist($profile);
+        $profile->setUser($user);
+        $profile->setMe($me);
+        $this->sendToDatabase($user);
         $this->entityManager->flush();
         $token = $this->jwt->create($user);
         return $token;

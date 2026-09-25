@@ -7,14 +7,19 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use App\DTO\PositionDto;
+use App\DTO\PositionUpdatedDto;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\PositionEntity;
 use App\Repository\AttributesRepository;
-use App\Service\ValidatePositionData;
+use App\Service\ValidatePositionBasicData;
 use App\Service\RateLimitService;
 use Symfony\Component\HttpFoundation\Request;
 use App\Repository\PositionEntityRepository;
+use Doctrine\ORM\OptimisticLockException;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use App\Service\PositionUpdaterService;
 
 final class PositionController extends AbstractController
 {
@@ -22,18 +27,19 @@ final class PositionController extends AbstractController
     public function __construct(
         private EntityManagerInterface $entityManager,
         private AttributesRepository $attributeRepository,
-        private ValidatePositionData $validatePositionData,
+        private ValidatePositionBasicData $validatePositionBasicData,
         private RateLimitService $rateLimitService,
-        private PositionEntityRepository $positionRepository
+        private PositionEntityRepository $positionRepository,
+        private PositionUpdaterService $positionUpdaterService
     ){}
     #[Route('/api/position', name: 'app_position', methods: ['POST'])]
-    public function post(#[MapRequestPayload] PositionDto $dto, Request $request): JsonResponse
+    public function create(#[MapRequestPayload] PositionDto $dto, Request $request): JsonResponse
     {
        $user = $this->getUser();
        $this->rateLimitService->enforce($user->getEmail(), $request->getClientIp(), 'api');
        $this->rateLimitService->enforce($user->getEmail(), $request->getClientIp(), 'positionCreate');
 
-       $this->validatePositionData->validate($dto);
+       $this->validatePositionBasicData->validate($dto);
        $position = new PositionEntity();
        $position->setName($dto->name);
        $position->setDescription($dto->description);
@@ -53,6 +59,7 @@ final class PositionController extends AbstractController
        
        return $this->json(["status"=>"ok", 'position' => $position]);
     }
+
     #[Route('/api/position', name: 'app_position_get', methods: ['GET'])]
     public function get(Request $request){
         $after = $request->query->getInt('after', 0);
@@ -99,4 +106,14 @@ final class PositionController extends AbstractController
             'hasNext' => $hasNext
         ], 200);
     }
+    #[Route('/api/position', name: 'app_position_patch', methods: ['PATCH'])]
+    public function update(#[MapRequestPayload] PositionUpdatedDto $dto, Request $request){
+        $user = $this->getUser();
+        $position = $this->positionUpdaterService->update($user, $dto, $request->getClientIp());
+        return $this->json([
+            "status"=>"ok",
+            "position"=>$position
+        ]);
+    }
+
 }

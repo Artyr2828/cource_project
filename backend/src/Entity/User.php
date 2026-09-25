@@ -12,7 +12,7 @@ use App\Entity\UserProfile;
 use App\Entity\UserAttribute;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
-
+use App\Entity\Profile;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\HasLifecycleCallbacks]
@@ -41,24 +41,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $createdAt;
 
-    #[ORM\OneToOne(mappedBy: 'user', targetEntity: UserProfile::class)]
-    private ?UserProfile $profile = null;
-
-    #[ORM\OneToMany(mappedBy: 'user', targetEntity: UserAttribute::class)]
-    private Collection $attributes;
-
+    #[ORM\OneToOne(mappedBy: 'user', targetEntity: Profile::class)]
+    private ?Profile $profile = null;   
 
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
-
-    public function __construct()
-    {
-        $this->attributes = new ArrayCollection();
-    }
-
-    public function addToAttributes(UserAttribute $attribute){
-        $this->attributes->add($attribute);
-    }
 
     public function getId(): ?int
     {
@@ -131,19 +118,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
       return $roles;
     }
 
-    public function getProfile(): array{
-        if ($this->role === UserRole::CANDIDATE){
-            $profile = [
-                'me' => $this->profile,  
-                'attributes' => $this->attributes,
-                'role' => $this->role
-            ];
-        } else if ($this->role === UserRole::RECRUITER){
-            $profile = [
-                'me' => $this->profile,
-                'role' => $this->role
-            ];
-        }
-        return $profile;
+    public function getProfile(): Profile{
+        return $this->profile;
     }
+
+    public function setProfile(Profile $profile): static {
+        $this->profile = $profile;
+
+        return $this;
+    }
+
 }

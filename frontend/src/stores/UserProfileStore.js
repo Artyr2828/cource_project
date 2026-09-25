@@ -1,15 +1,16 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import api from '../services/api.js';
-
-
+import { useRouter } from "vue-router";
+import { useRoute } from "vue-router";
 
 
 export const useUserProfileStore = defineStore('user', () => {
     const user = ref(null);
     const errorMessage = ref('');
-    const isLoading = ref(false);
-    
+    const isLoading = ref(true);
+    const router = useRouter();
+    const route = useRoute();
     async function fetchProfile(){
         if (user.value){
             return;
@@ -18,21 +19,14 @@ export const useUserProfileStore = defineStore('user', () => {
         
         isLoading.value = true;
         errorMessage.value = '';
-        try{
+      
             
             const response = await api.get('/api/profile/me');
             user.value = response.data;
             
-        } catch (error) {
-            if (!error.response){
-                 errorMessage.value = "Server issues—please try again later";
-            }else{
-                errorMessage.value = error.response.data?.message;
-            }
-        } finally {
-            isLoading.value = false;
-        }
     }
+        
+    
 
     return {
         user,

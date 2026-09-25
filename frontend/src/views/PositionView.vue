@@ -2,7 +2,7 @@
     
 
 <div v-if="userProfile.user?.role === 'recruiter' && userProfile.user !== null" class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
         <h1>Positions</h1>
 
         <button @click="isModalOpen = true" class="btn btn-primary">
@@ -192,7 +192,7 @@
         >
     </div>
 
-    <div class="table-responsive">
+    <div v-if="positionStore.isLoading === false" class="table-responsive">
         <table class="table table-hover align-middle">
             <thead>
                 <tr>
@@ -203,17 +203,129 @@
                 </tr>
             </thead>
 
-            <tbody v-if="positionStore.isLoading === false">
-            <tr  v-for="position in positionStore.position.positions" :key="position.id">
+            <tbody>
+            <tr  v-for="position in positionStore.position.positions" :key="position.id" @click="showPosition(position)">
                 <td>{{ position.name }}</td>
                 <td class="text-truncate" style="max-width: 300px;">{{ position.description }}</td>
                 <td>{{ position.attributes?.length ?? 0}} </td>
-                
             </tr>
             </tbody>
+            
         </table>
 
-        
+
+        <!--Modal Position one-->
+        <div v-if="isModalShowPosition" class="modal fade show d-block" tabindex="-2" style="background-color: rgba(0,0,0,0.5);" @click.self="isModalAttributesOpen = false">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Edit Position</h5>
+                            <button type="button" class="btn-close" @click="isModalShowPosition = false"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            
+
+
+
+
+                            <div class="mb-3">
+                <label for="positionName" class="form-label">
+                    Position name
+                </label>
+                <input
+                    id="positionName"
+                    type="text"
+                    @input="clearErrors('name')"
+                    v-model="positionShow.name"
+                    :class="{'is-invalid': getPositionError('name')}"
+                    class="form-control"
+                    placeholder="Enter position name"
+                >
+                <small v-if="getPositionError('name')" class="small text-danger">{{ getPositionError('name') }}</small> 
+            </div>
+
+            <div class="mb-3">
+                <label for="positionDescription" class="form-label">
+                    Description
+                </label>
+                <textarea
+                    id="positionDescription"
+                    @input="clearErrors('description')"
+                    v-model="positionShow.description"
+                    :class="{'is-invalid': getPositionError('description')}"
+                    class="form-control"
+                    rows="4"
+                    placeholder="Enter position description"
+                ></textarea>
+                <small v-if="getPositionError('description')" class="small text-danger">{{ getPositionError('description') }}</small> 
+            </div>
+
+           
+        <div class="mb-3">
+            <div class="d-flex justify-content-between">
+            <label for="positionAttributesSelected">
+                Attributes
+            </label>
+             <button @click="deleteSelectedAttributes" type="button" class="btn btn-danger btn-sm mb-2">Delete selected</button>
+            </div>
+        <div
+            v-if="positionShow.attributes.length > 0"
+            class="mt-3"
+        >   
+       
+
+        <div v-for="attribute in positionShow.attributes" :key="attribute.id" class="d-flex align-items-center mt-2 border rounded p-2">
+            <div class="form-check me-3">
+                <input
+                    class="form-check-input"
+                    type="checkbox"
+                    :value="attribute.id"
+                    v-model="selectedAttributes"
+                >
+                
+            </div>
+
+            <div>
+                <div class="fw-semibold">
+                    {{ attribute.name }}
+                </div>
+
+                <small class="text-body-secondary">
+                    {{ attribute.description }}
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <div v-else class="text-body-secondary mt-3">
+        No attributes selected
+    </div>
+</div>
+
+
+
+            <button
+                type="button"
+                class="btn btn-outline-primary"
+                @click="openModalAttributes"
+            >
+                Add attributes
+            </button>
+
+           
+            <div class="d-flex justify-content-center">
+             <small v-if="successfuly" class="text-success text-center">The position has been successfully created</small>
+             <small v-if="errorMessages" class="text-danger">{{ errorMessages }}</small>
+             </div>
+
+
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+
 
         <nav class="mt-3">
             <ul class="pagination justify-content-center">
@@ -229,6 +341,10 @@
             </ul>
         </nav>
     </div>
+    <div v-else class="d-flex justify-content-center">
+        <span class="spinner-border mt-3 text-center" style="width: 50px; height: 50px;"></span>
+    </div>
+    
 </div>
     
     <div v-if="userProfile.user?.role === 'candidate' && userProfile.user !== null" class="container">
@@ -267,7 +383,8 @@ const errors = ref([]);
 const successfuly = ref(false);
 const isLoad = ref(false);
 const errorMessages = ref('');
-
+const positionShow = ref(null);
+const isModalShowPosition = ref(false);
 const position = ref({
     name: '',
     description: '',
@@ -277,6 +394,13 @@ const position = ref({
 
 onMounted(async () => {
     await positionStore.fetchPosition(null);
+
+    try {
+        await userProfile.fetchProfile();
+    } catch (error) {
+        userProfile.isLoading = false;
+    } 
+    
 })
 async function openModalAttributes(){
     await attributeStore.fetchAttribute();
@@ -343,6 +467,11 @@ function nextPage(){
     positionStore.fetchPosition(lastPositionId);
 }
 
+function showPosition(position){
+    positionShow.value = position;
+    isModalShowPosition.value = true;
+}
+
 async function createPosition(position){
     isLoad.value = true;
     successfuly.value = false;
@@ -387,6 +516,13 @@ async function createPosition(position){
         
         return true;
     } catch(error){
+        if (error.response?.data?.status === 401){
+                 router.push({
+                    path: '/login', 
+                    query: {
+                        error: "Access to the profile page is prohibited for unauthorized users"
+                    }});
+            }
         if (error.response?.data?.errors){
 
             error.response.data.errors.forEach(element => {
@@ -404,5 +540,7 @@ async function createPosition(position){
     }
     console.log("Отправляется: ", position);
 }
+
+
 
 </script>
