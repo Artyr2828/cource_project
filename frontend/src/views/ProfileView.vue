@@ -480,7 +480,7 @@ const attributeUrl = ref('');
 const router = useRouter();
 const version = ref(null);
 const isFirstLoad = ref(true);
-
+userProfile.user = null;
 onMounted(async () => {
     try {
         await userProfile.fetchProfile();
