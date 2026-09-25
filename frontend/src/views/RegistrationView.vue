@@ -48,6 +48,7 @@ async function register(event) {
     errorMessage.value = 'Password must be at least 8 characters long';
     return;
   }
+  email.value = email.value.trim();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
     errorMessage.value = 'Email is Incorrect';
     return;
