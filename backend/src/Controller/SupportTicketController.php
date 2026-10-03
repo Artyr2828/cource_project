@@ -1,0 +1,51 @@
+<?php
+
+namespace App\Controller;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use App\DTO\TicketDto;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+
+final class SupportTicketController extends AbstractController
+{
+    #[Route('/api/support/ticket', name: 'app_support_ticket', methods: ['POST'])]
+    public function create(#[MapRequestPayload] TicketDto $ticketDto, HttpClientInterface $httpClient): JsonResponse
+    {
+        /** @var \App\Entity\User $user */
+        $user = $this->getUser();
+        $profile = $user->getProfile();
+        $reportedBy = sprintf('%s %s (Role: %s)', $profile->getMe()->getFirstName(), $profile->getMe()->getLastName(), $user->getRole());
+        $ticketDto = $ticketDto->withReportedBy($reportedBy);
+
+        $fileName = 'ticket_' . time() . '.json';
+        $jsonPayload = json_encode($ticketDto, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $token = $this->getParameter('dropbox.access_token');
+        $response = $this->sendToDropBox($httpClient, $token, $fileName, $jsonPayload);
+
+        return $this->json(['message' => 'Support ticket created successfully'], 201);
+    }
+
+    public function sendToDropBox(HttpClientInterface $httpClient, string $dropBoxToken, string $fileName, string $jsonPayload){
+        $response = $httpClient->request('POST', 'https://content.dropboxapi.com/2/files/upload', [
+                'headers' => [
+                    'Content-Type' => 'application/octet-stream',
+                    'Authorization' => 'Bearer ' . $dropBoxToken,
+                    'Dropbox-API-Arg' => json_encode([
+                        'path' => '/' . $fileName,
+                        'mode' => 'add',
+                        'autorename' => true,
+                        'mute' => false,
+                    ]),
+                ],
+                'body' => $jsonPayload,
+            ]);
+
+        $response->toArray();
+
+        return $response;
+    }
+}

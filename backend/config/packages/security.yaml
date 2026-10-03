@@ -41,6 +41,9 @@ security:
        -    { path: ^/api/profile/me, roles: [ROLE_CANDIDATE, ROLE_ADMIN], methods: [PATCH] }
        -    { path: ^/api/position, roles: [ROLE_RECRUITER, ROLE_ADMIN], methods: [POST] }
        -    { path: ^/api/position, roles: [ROLE_RECRUITER, ROLE_ADMIN], methods: [PATCH] }
+       -    { path: ^/api/support/ticket, roles: [ROLE_USER], methods: [POST] }
+       -    { path: ^/api/salesforce, roles: [ROLE_USER], methods: [POST] }
+       -    { path: ^/api/salesforce, roles: [ROLE_USER], methods: [PATCH] }
 
 when@test:
     security:

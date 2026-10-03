@@ -204,7 +204,7 @@
             </thead>
 
             <tbody>
-            <tr  v-for="position in positionStore.position.positions" :key="position.id" @click="showPosition(position)">
+            <tr  v-for="position in positionStore.position?.positions" :key="position.id" @click="showPosition(position)">
                 <td>{{ position.name }}</td>
                 <td class="text-truncate" style="max-width: 300px;">{{ position.description }}</td>
                 <td>{{ position.attributes?.length ?? 0}} </td>
@@ -220,7 +220,7 @@
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">Edit Position</h5>
-                            <button type="button" class="btn-close" @click="isModalShowPosition = false"></button>
+                            <button type="button" class="btn-close" @click="isModalShowPosition = false; positionStore.currentPosition = null"></button>
                         </div>
 
                         <div class="modal-body">
@@ -295,7 +295,10 @@
                     {{ attribute.description }}
                 </small>
             </div>
+
+            
         </div>
+        
     </div>
 
     <div v-else class="text-body-secondary mt-3">
@@ -304,7 +307,7 @@
 </div>
 
 
-
+         <div class="d-flex justify-content-between">
             <button
                 type="button"
                 class="btn btn-outline-primary"
@@ -312,7 +315,8 @@
             >
                 Add attributes
             </button>
-
+            <button @click="modalHelp.isOpen = true" class="btn btn-warning">Help</button>
+        </div>
            
             <div class="d-flex justify-content-center">
              <small v-if="successfuly" class="text-success text-center">The position has been successfully created</small>
@@ -371,9 +375,10 @@ import { useRouter } from 'vue-router';
 import { useAttributeStore } from '@/stores/AttributeStore.js';
 import { usePositionStore } from '@/stores/PositionStore.js';
 import axios from '../services/api.js';
+import { useModalHelpStore } from '@/stores/ModalHelp.js';
 const attributeStore = useAttributeStore();
 const positionStore = usePositionStore();
-
+const modalHelp = useModalHelpStore();
 const router = useRouter();
 const userProfile = useUserProfileStore();
 const isModalOpen = ref(false);
@@ -469,6 +474,7 @@ function nextPage(){
 
 function showPosition(position){
     positionShow.value = position;
+    positionStore.currentPosition = position;
     isModalShowPosition.value = true;
 }
 

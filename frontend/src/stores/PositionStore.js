@@ -6,9 +6,9 @@ import api from '../services/api.js';
 export const usePositionStore = defineStore('position', () => {
     const position = ref(null);
     const positionPrevios = ref(null);
-    const positionNext = ref(null);
     const errorMessage = ref('');
     const isLoading = ref(true);
+    const currentPosition = ref(null);
 
     async function fetchPosition(idPosition = null){
         isLoading.value = true;
@@ -79,6 +79,7 @@ export const usePositionStore = defineStore('position', () => {
         errorMessage,
         fetchPosition,
         isLoading,
-        positionPrevios
+        positionPrevios,
+        currentPosition
     };
 })

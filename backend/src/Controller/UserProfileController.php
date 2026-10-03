@@ -14,6 +14,9 @@ use Doctrine\ORM\EntityManagerInterface;
 use App\Service\ValidateValueUserAttribute;
 use App\Service\ValidateUserMeSection;
 use Doctrine\ORM\OptimisticLockException;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+use App\Controller\SalesforceController;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 final class UserProfileController extends AbstractController
 {
@@ -23,6 +26,8 @@ final class UserProfileController extends AbstractController
         private UserAttributeRepository $userAttributeRepository,
         private ValidateValueUserAttribute $validateValueUserAttribute,
         private ValidateUserMeSection $validateUserMeSection,
+        private HttpClientInterface $httpClient,
+        private SalesforceController $salesforceController
     ){}
 
 
@@ -108,12 +113,70 @@ final class UserProfileController extends AbstractController
           /** @var \App\Entity\User $user */
         $user = $this->getUser();
         $profile = $user->getProfile();
+
+        $responseSalesforce = $this->getDataInSalesforce($user->getSalesforceContactId());
+        $isSyncedWithSalesforce = !is_null($user->getSalesforceAccountId()) && !is_null($user->getSalesforceContactId());
+
+
         $response = [
             'me' => $profile->getMe(),
             'attributes' => $profile->getAttributes(),
             'role' => $user->getRole(),
-            'version' => $profile->getVersion()
+            'version' => $profile->getVersion(),
+            "isSyncedWithSalesforce" => $isSyncedWithSalesforce,
+            "email" => $user->getEmail(),
+
+            "salesforceData" => [
+                "companyName" => $responseSalesforce['Account']['Name'] ?? null,
+                "position" => $responseSalesforce['Title'] ?? null,
+                "phone" => $responseSalesforce['Phone'] ?? null
+            ]
+
         ];
         return $this->json($response);
+    }
+
+    private function getDataInSalesforce(?string $salesforceContactId): array
+    {
+        if (is_null($salesforceContactId)) {
+            return [];
+        }
+        /** @var \App\Entity\User $user */
+        $user = $this->getUser();
+
+        $tokenSalesforce = $this->salesforceController->getTokenAndInstanceUrl();
+        $soql = sprintf(
+            "SELECT Id, Title, Phone, Account.Id, Account.Name FROM Contact WHERE Id = '%s'",
+            $salesforceContactId
+        );  
+
+        $responseSalesforce = $this->httpClient->request('GET', sprintf('%s/services/data/v60.0/query/', $tokenSalesforce['instance_url']), [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $tokenSalesforce['access_token'],
+                'Accept'        => 'application/json',
+            ],
+            'query' => [
+                'q' => $soql,
+            ],
+        ]);
+
+       if ($responseSalesforce->getStatusCode() === 404) {
+            $user->setSalesforceAccountId(null);
+            $user->setSalesforceContactId(null);
+            $this->entityManager->flush();
+
+            return [];
+        }
+
+        $data = $responseSalesforce->toArray();
+        $records = $data['records'] ?? [];
+        if (empty($records)) {
+            $user->setSalesforceAccountId(null);
+            $user->setSalesforceContactId(null);
+            $this->entityManager->flush();
+            return [];
+        }
+
+        return $records[0];
     }
 }

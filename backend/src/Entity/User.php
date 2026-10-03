@@ -38,6 +38,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     options: ['default'=>'candidate'])]
     private UserRole $role = UserRole::CANDIDATE;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $salesforceAccountId = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $salesforceContactId = null;
+
     #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $createdAt;
 
@@ -126,6 +132,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->profile = $profile;
 
         return $this;
+    }
+
+    public function getSalesforceAccountId(): ?string {
+        return $this->salesforceAccountId;
+    }
+
+    public function setSalesforceAccountId(?string $salesforceAccountId): self {
+        $this->salesforceAccountId = $salesforceAccountId;
+        return $this;
+    }
+
+    public function getSalesforceContactId(): ?string {
+    return $this->salesforceContactId;
+}
+
+    public function setSalesforceContactId(?string $salesforceContactId): self {
+        $this->salesforceContactId = $salesforceContactId;
+        return $this;       
     }
 
 }

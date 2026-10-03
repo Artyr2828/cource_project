@@ -5,7 +5,7 @@
     href="https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@v1/web/uc-file-uploader-minimal.min.css"
 />
     <div v-if="userProfile.user !== null && userProfile.isLoading !== true" class="container p-2 pt-3">
-        <div class="container d-flex align-items-start gap-3 p-2 rounded" style="height: 100px; background-color: antiquewhite;" >
+        <div class="container d-flex align-items-start gap-3 p-2 rounded" style="height: 120px; background-color: antiquewhite;" >
             <img v-if="isNotLoad" :src="userProfile.user?.me?.avatarUrl" alt="" class="rounded object-fit-cover" style="height: 100%; width: auto; object-fit: cover;">
             <img v-else="isNotLoad" src="https://media1.tenor.com/m/P3jIMIC96psAAAAC/ggg.gif" alt="" class="rounded" style="max-height: 100%; width: auto; object-fit: cover;">
             <div class="ps-2">
@@ -14,7 +14,17 @@
                 
                 <p v-if="userProfile.user?.me?.location" class="fs-5">{{ userProfile.user.me.location }}</p>
                 <p v-else class="fs-5">The location is not specified</p>
+                
             </div>
+            <div v-if="form.isSyncedWithSalesforce === false" class="ms-auto mt-auto mb-auto">
+                <button @click="isOpenSyncModal = true" class="btn btn-success">Sync with Salesforce</button>
+            </div>
+            
+            <div v-if="form.isSyncedWithSalesforce === true" class="ms-auto mt-auto mb-auto">
+                <button @click="isOpenUpdateSyncModal = true" class="btn btn-secondary">Update Salesforce Data</button>
+            </div>
+            
+            
         </div>
 
         <div class="container">
@@ -227,6 +237,153 @@
                     </div>
                 </div>
             </Transition>
+
+        <!--ModalSync-->
+        <div v-if="isOpenSyncModal" class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" @click.self="isOpenSyncModal = false">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Sync with Salesforce</h5>
+                            <button type="button" class="btn-close" @click="isOpenSyncModal = false; form.success = false; form.errorMessage = ''"></button>
+                        </div>
+
+                        <div class="modal-body">
+                        
+
+
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted small">First Name</label>
+                                        <input type="text" class="form-control bg-light" :value="userProfile.user?.me?.firstName" readonly />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted small">Last Name</label>
+                                        <input type="text" class="form-control bg-light" :value="userProfile.user?.me?.lastName" readonly />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted small">Email</label>
+                                        <input type="email" class="form-control bg-light" :value="userProfile.user?.email" readonly />
+                                    </div>
+
+                                    <hr class="my-3" />
+                                    <div class="mb-3">
+                                        <label for="companyName" class="form-label fw-semibold">Company Name <span class="text-danger">*</span></label>
+                                        <input id="companyName" type="text" class="form-control" v-model.trim="form.companyName" placeholder="e.g. ООО Trar" required/>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="position" class="form-label fw-semibold">Position / Title <span class="text-danger">*</span></label>
+                                        <input id="position" type="text" class="form-control" v-model.trim="form.position" placeholder="e.g. Php Backender" required/>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="phone" class="form-label fw-semibold">Phone Number</label>
+                                        <input 
+                                            id="phone"
+                                            type="tel" 
+                                            class="form-control" 
+                                            v-model.trim="form.phone" 
+                                            placeholder="+7 (999) 000-00-00"
+                                        />
+                                    </div>
+
+                                    <button v-if="isLoading === false && form.success !== true" @click="saveChanges" type="submit" class="btn btn-primary">Synchronize</button>
+                                    <button v-else-if="isLoading === true && form.success !== true" type="submit" class="btn btn-primary" disabled>
+                                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                        Synchronizing...
+                                    </button>
+                                    <div v-if="form.success" class="d-flex justify-content-center mt-3">
+                                        <span  class="text-success d-block">Data successfully synchronized with Salesforce</span>
+                                    </div>
+                                    <div v-if="form.errorMessage" class="d-flex justify-content-center mt-3">  
+                                        <span  class="text-danger small">{{ form.errorMessage }}</span>
+                                    </div>
+                                    
+                                </div>
+                
+
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--ModalUpdateSync-->
+       <div v-if="isOpenUpdateSyncModal" class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);" @click.self="isOpenUpdateSyncModal = false">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Update Salesforce Data</h5>
+                            <button type="button" class="btn-close" @click="isOpenUpdateSyncModal = false; form.success = false; form.errorMessage = ''"></button>
+                        </div>
+
+                          
+
+
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted small">First Name</label>
+                                        <input type="text" class="form-control bg-light" :value="userProfile.user?.me?.firstName" readonly />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted small">Last Name</label>
+                                        <input type="text" class="form-control bg-light" :value="userProfile.user?.me?.lastName" readonly />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted small">Email</label>
+                                        <input type="email" class="form-control bg-light" :value="userProfile.user?.email" readonly />
+                                    </div>
+
+                                    <hr class="my-3" />
+                                    <div class="mb-3">
+                                        <label for="companyName" class="form-label fw-semibold">Company Name <span class="text-danger">*</span></label>
+                                        <input id="companyName" type="text" class="form-control" v-model.trim="form.companyName" placeholder="e.g. ООО Ittransition" required/>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="position" class="form-label fw-semibold">Position / Title <span class="text-danger">*</span></label>
+                                        <input id="position" type="text" class="form-control" v-model.trim="form.position"  placeholder="e.g. Php Backender" required/>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="phone" class="form-label fw-semibold">Phone Number</label>
+                                        <input 
+                                            id="phone"
+                                            type="tel" 
+                                            class="form-control" 
+                                            v-model.trim="form.phone" 
+                                            placeholder="+7 (999) 000-00-00"
+                                        />
+                                    </div>
+
+                                    <button v-if="isLoading === false && isChangedDataSalesforce()" @click="updateChanges" type="submit" class="btn btn-primary">Save Changes</button>
+                                    <button v-else-if="isLoading === true" type="submit" class="btn btn-primary" disabled>
+                                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                        Saving...
+                                    </button>
+                                    <button v-else class="btn btn-primary" disabled>Save Changes</button>
+                                    <div v-if="form.success" class="d-flex justify-content-center mt-3">
+                                        <span  class="text-success d-block">Data successfully updated in Salesforce</span>
+                                    </div>
+                                    <div v-if="form.errorMessage" class="d-flex justify-content-center mt-3">
+                                        <span  class="text-danger d-block small">{{ form.errorMessage }}</span>
+                                    </div>
+                                </div>
+
+
+
+
+
+                    </div>
+                </div>
+            </div>
+
+
+
 
         <div v-if="userProfile.user?.role === 'candidate'">
              <!--Секция Info-->
@@ -481,9 +638,38 @@ const router = useRouter();
 const version = ref(null);
 const isFirstLoad = ref(true);
 
+const isOpenSyncModal = ref(false);     
+const isOpenUpdateSyncModal = ref(false);
+
+const form = ref({
+    companyName: 'hss',
+    position: '',
+    phone: '',
+    success: false,
+    errorMessage: '',
+    isSyncedWithSalesforce: null
+});
+
+const formPrevios = ref({
+    companyName: '',
+    position: '',
+    phone: ''
+});
+const isLoading = ref(false);
+
 onMounted(async () => {
     try {
         await userProfile.fetchProfile();
+        console.log(userProfile.user);
+        form.value.isSyncedWithSalesforce = userProfile.user?.isSyncedWithSalesforce;
+        form.value.companyName = userProfile.user.salesforceData?.companyName || ''; 
+        form.value.position = userProfile.user.salesforceData?.position || '';
+        form.value.phone = userProfile.user.salesforceData?.phone || '';
+
+        formPrevios.value.companyName = userProfile.user.salesforceData?.companyName || '';
+        formPrevios.value.position = userProfile.user.salesforceData?.position || ''; 
+        formPrevios.value.phone = userProfile.user.salesforceData?.phone || '';
+
         version.value = userProfile.user.version;
     } catch (error) {
         
@@ -612,19 +798,6 @@ function onDragLeave() {
     onAvatar.value = false;
 }
 
-function handleFile(event){
-     
-    const file = event.dataTransfer.files[0];
-    const state = api.getOutputCollectionState();
-    if (state.totalCount > 0){
-        api.removeFileByInternalId(state.allEntries[0].internalId);
-        
-    }
-    const entry = api.addFileFromObject(file); 
-
-    api.uploadAll();
-
-}
 
 
 let timer = null;
@@ -791,6 +964,75 @@ function getAttributeUrl(attribute){
         return false;
     }
     
+}
+
+
+function isChangedDataSalesforce(){
+    if (userProfile.user.salesforceData){
+        if (form.value.companyName === formPrevios.value.companyName && form.value.position === formPrevios.value.position && form.value.phone === formPrevios.value.phone){
+            return false;
+        }
+    }
+    return form.value.companyName !== userProfile.user.salesforceData?.companyName ||
+           form.value.position !== userProfile.user.salesforceData?.position ||
+           form.value.phone !== userProfile.user.salesforceData?.phone;
+}
+
+async function updateChanges(){
+
+    try{
+        isLoading.value = true;
+        const response = {
+            'companyName': form.value.companyName,
+            'position': form.value.position,
+            'phone': form.value.phone
+        }
+
+        await axios.patch('/api/salesforce', response)
+        form.value.success = true;
+        formPrevios.value.companyName = form.value.companyName;
+        formPrevios.value.position = form.value.position;
+        formPrevios.value.phone = form.value.phone;
+    } catch(error){
+        if (error.response?.status === 404) {
+            form.value.isSyncedWithSalesforce = false;
+            form.value.errorMessage = error.response.data.message;
+        }
+        console.log(error);
+    } finally{
+        isLoading.value = false;
+    }
+}
+
+async function saveChanges(){
+    try{
+        form.value.success = false;
+        isLoading.value = true;
+        const response = {
+            'companyName': form.value.companyName,
+            'position': form.value.position,
+            'phone': form.value.phone
+        }
+
+        await axios.post('/api/salesforce', response);
+        form.value.success = true;
+        form.value.isSyncedWithSalesforce = true;
+        form.value.companyName = response.companyName;
+        form.value.position = response.position;
+        form.value.phone = response.phone;
+
+        formPrevios.value.companyName = response.companyName;
+        formPrevios.value.position = response.position;
+        formPrevios.value.phone = response.phone;
+
+    } catch(error){
+        if (error.response?.status === 500) {
+            form.value.isSyncedWithSalesforce = false;
+            form.value.errorMessage = error.response?.data?.message;
+        }
+    } finally{
+        isLoading.value = false;
+    }
 }
 
 watch(() => userProfile.user,
