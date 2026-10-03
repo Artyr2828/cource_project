@@ -279,7 +279,7 @@
                                     </div>
 
                                     <div class="mb-3">
-                                        <label for="phone" class="form-label fw-semibold">Phone Number</label>
+                                        <label for="phone" class="form-label fw-semibold">Phone Number  <span class="text-danger">*</span></label>
                                         <input 
                                             id="phone"
                                             type="tel" 
@@ -351,7 +351,7 @@
                                     </div>
 
                                     <div class="mb-3">
-                                        <label for="phone" class="form-label fw-semibold">Phone Number</label>
+                                        <label for="phone" class="form-label fw-semibold">Phone Number  <span class="text-danger">*</span></label>
                                         <input 
                                             id="phone"
                                             type="tel" 
