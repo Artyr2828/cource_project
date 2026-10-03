@@ -165,13 +165,16 @@ final class SalesforceController extends AbstractController
             'json' => $contactUpdateData
         ]);
 
-        if ($respAccount->getStatusCode() === 404) {
+        if ($respContact->getStatusCode() === 404) {
             $user->setSalesforceAccountId(null);
             $user->setSalesforceContactId(null);
             $this->entityManager->flush();
             throw new NotFoundHttpException('Salesforce account or contact not found. Synchronization has been reset. Please try again after closing the modal window');
-        } else {
-            throw new \RuntimeException("Error in salesforce");
+        } 
+
+         if ($respContact->getStatusCode() !== 204) {
+            $error = $respAccount->toArray(false);
+            throw new \RuntimeException('error of update Account in Salesforce: ' . json_encode($error));
         }
         
     }
