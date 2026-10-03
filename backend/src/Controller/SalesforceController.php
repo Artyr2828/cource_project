@@ -166,6 +166,23 @@ final class SalesforceController extends AbstractController
         ]);
 
         if ($respContact->getStatusCode() === 404) {
+            if ($user->getSalesforceAccountId()) {
+                try {
+                    $urlAccountDelete = sprintf(
+                    '%s/services/data/v60.0/sobjects/Account/%s',
+                    $dataSalesforse['instance_url'],
+                    $user->getSalesforceAccountId()
+                    );
+
+                    $this->httpClient->request('DELETE', $urlAccountDelete, [
+                        'headers' => [
+                        'Authorization' => 'Bearer ' . $accessToken,
+                        ],
+                    ]);
+                } catch (\Throwable $e) {
+                    // 
+                }
+            }
             $user->setSalesforceAccountId(null);
             $user->setSalesforceContactId(null);
             $this->entityManager->flush();
@@ -173,8 +190,8 @@ final class SalesforceController extends AbstractController
         } 
 
          if ($respContact->getStatusCode() !== 204) {
-            $error = $respAccount->toArray(false);
-            throw new \RuntimeException('error of update Account in Salesforce: ' . json_encode($error));
+            $error = $respContact->toArray(false);
+            throw new \RuntimeException('error of update Contact in Salesforce: ' . json_encode($error));
         }
         
     }
