@@ -25,7 +25,7 @@ class SalesforceDto
             pattern: '/^\+?[0-9\s\-\(\)]{7,20}$/',
             message: 'Invalid phone number format.'
         )]
-        public string $phone,
+        public ?string $phone = null,
 
 
         public ?string $firstName = null,

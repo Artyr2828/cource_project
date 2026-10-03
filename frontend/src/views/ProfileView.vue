@@ -286,6 +286,7 @@
                                             class="form-control" 
                                             v-model.trim="form.phone" 
                                             placeholder="+7 (999) 000-00-00"
+                                            required
                                         />
                                     </div>
 
@@ -357,6 +358,7 @@
                                             class="form-control" 
                                             v-model.trim="form.phone" 
                                             placeholder="+7 (999) 000-00-00"
+                                            required
                                         />
                                     </div>
 
@@ -979,6 +981,46 @@ function isChangedDataSalesforce(){
 }
 
 async function updateChanges(){
+    const companyName = form.value.companyName?.trim() || '';
+    const position = form.value.position?.trim() || '';
+    const phone = form.value.phone?.trim() || '';
+
+    //Company Name
+    if (!companyName) {
+        form.value.errorMessage = 'Company name is required.';
+        return false;
+    }
+    if (companyName.length < 2) {
+        form.value.errorMessage = 'Company name must be at least 2 characters long.';
+        return false;
+    }
+    if (companyName.length > 255) {
+        form.value.errorMessage = 'Company name cannot be longer than 255 characters.';
+        return false;
+    }
+
+    //Position
+    if (!position) {
+        form.value.errorMessage = 'Job position is required.';
+        return false;
+    }
+    if (position.length > 128) {
+        form.value.errorMessage = 'Job position cannot be longer than 128 characters.';
+        return false;
+    }
+
+    //Phone
+    if (!phone) {
+        form.value.errorMessage = 'Phone number is required.';
+        return false;
+    }
+    const phoneRegex = /^\+?[0-9\s\-\(\)]{7,20}$/;
+    if (!phoneRegex.test(phone)) {
+        form.value.errorMessage = 'Invalid phone number format.';
+        return false;
+    }
+
+    form.value.errorMessage = '';
 
     try{
         isLoading.value = true;
@@ -1005,6 +1047,46 @@ async function updateChanges(){
 }
 
 async function saveChanges(){
+    const companyName = form.value.companyName?.trim() || '';
+    const position = form.value.position?.trim() || '';
+    const phone = form.value.phone?.trim() || '';
+
+    //Company Name
+    if (!companyName) {
+        form.value.errorMessage = 'Company name is required.';
+        return false;
+    }
+    if (companyName.length < 2) {
+        form.value.errorMessage = 'Company name must be at least 2 characters long.';
+        return false;
+    }
+    if (companyName.length > 255) {
+        form.value.errorMessage = 'Company name cannot be longer than 255 characters.';
+        return false;
+    }
+
+    //Position
+    if (!position) {
+        form.value.errorMessage = 'Job position is required.';
+        return false;
+    }
+    if (position.length > 128) {
+        form.value.errorMessage = 'Job position cannot be longer than 128 characters.';
+        return false;
+    }
+
+    //Phone
+    if (!phone) {
+        form.value.errorMessage = 'Phone number is required.';
+        return false;
+    }
+    const phoneRegex = /^\+?[0-9\s\-\(\)]{7,20}$/;
+    if (!phoneRegex.test(phone)) {
+        form.value.errorMessage = 'Invalid phone number format.';
+        return false;
+    }
+
+    form.value.errorMessage = '';
     try{
         form.value.success = false;
         isLoading.value = true;
@@ -1029,7 +1111,7 @@ async function saveChanges(){
         if (error.response?.status === 500) {
             form.value.isSyncedWithSalesforce = false;
             form.value.errorMessage = error.response?.data?.message;
-        }
+        } 
     } finally{
         isLoading.value = false;
     }
