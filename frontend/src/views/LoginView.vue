@@ -45,6 +45,7 @@ async function login() {
         errorMessage.value = 'Email and password are required';
         return;
     }
+    email.value = email.value.trim();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)){
         errorMessage.value = 'Email is Incorrect';
         return;
