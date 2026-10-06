@@ -29,7 +29,7 @@
       
       <div class="modal-header">
         <h5 class="modal-title">Help</h5>
-        <button type="button" class="btn-close" @click="modalHelp.isOpen = false"></button>
+        <button type="button" class="btn-close" @click="modalHelp.isOpen = false; errorMessage = ''; successfuly = false"></button>
       </div>
 
       <div class="modal-body">
@@ -59,6 +59,11 @@
       <div v-if="errorMessage" class="d-flex justify-content-center">
         <span class="text-danger">{{ errorMessage }}</span>
       </div>
+
+      <div v-if="successfuly === true" class="d-flex justify-content-center">
+        <span class="text-success">Support ticket created successfully</span>
+      </div>
+      
 
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" @click="isClickOnHelp = false">Закрыть</button>
@@ -101,7 +106,7 @@ const priority = ref('Low');
 const errorMessage = ref('');
 const positionStore = usePositionStore();
 const modalHelp = useModalHelpStore();
-
+const successfuly = ref(false);
 onMounted(() => {
 
 });
