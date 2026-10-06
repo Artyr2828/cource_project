@@ -67,7 +67,8 @@
 
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" @click="isClickOnHelp = false">Закрыть</button>
-        <button @click="sendSupportTicket" type="button" class="btn btn-primary" >Сохранить</button>
+        <button v-if="isLoading === false" @click="sendSupportTicket" type="button" class="btn btn-primary" >Сохранить</button>
+        <button v-else type="button" class="btn btn-primary" disabled><span v-if="isLoader" class="spinner-border" style="width: 20px; height: 20px;"></span></button>
       </div>
 
 
@@ -107,6 +108,8 @@ const errorMessage = ref('');
 const positionStore = usePositionStore();
 const modalHelp = useModalHelpStore();
 const successfuly = ref(false);
+const isLoading = ref(false);
+
 onMounted(() => {
 
 });
@@ -133,9 +136,9 @@ async function sendSupportTicket(){
       "link": positionStore.currentPosition ? `${window.location.origin}?id=${positionStore.currentPosition.id}` : window.location.origin,
       "adminEmails": adminEmails
     }
-console.log(response);
+    isLoading.value = true;
     await axios.post(`/api/support/ticket`, response);
-
+    successfuly.value = true;
     
   } catch (error){
     console.log(error);
@@ -151,6 +154,8 @@ console.log(response);
         errorMessage.value = "An unexpected error occurred. Please try again later.";
       }
     }
+  } finally {
+    isLoading.value = false;
   }
 }
 
