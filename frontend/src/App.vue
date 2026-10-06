@@ -66,9 +66,11 @@
       
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" @click="isClickOnHelp = false">Закрыть</button>
-        <button v-if="isLoading === false" @click="sendSupportTicket" type="button" class="btn btn-primary" >Сохранить</button>
-        <button v-else type="button" class="btn btn-primary" disabled><span v-if="isLoader" class="spinner-border" style="width: 20px; height: 20px;"></span></button>
+        <button type="button" class="btn btn-secondary" @click="isClickOnHelp = false">Close</button>
+        <button @click="sendSupportTicket" type="button" class="btn btn-primary">
+          <span v-if="isLoading" class="spinner-border" style="width: 20px; height: 20px;"></span>
+          <span v-else class="text-center fw-bold">Save</span>
+        </button>
       </div>
 
 
@@ -119,6 +121,9 @@ function clickOnHelp(){
 }
 
 async function sendSupportTicket(){
+  if (isLoading.value === true){
+    return;
+  }
   console.log("Отправка...");
   if (summary.value === ''){
     errorMessage.value = "Please enter a description of your problem";
