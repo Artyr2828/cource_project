@@ -23,10 +23,25 @@ final class SupportTicketController extends AbstractController
 
         $fileName = 'ticket_' . time() . '.json';
         $jsonPayload = json_encode($ticketDto, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-        $token = $this->getParameter('dropbox.access_token');
-        $response = $this->sendToDropBox($httpClient, $token, $fileName, $jsonPayload);
+        $accessToken = $this->getAccessToken($httpClient);
+        $response = $this->sendToDropBox($httpClient, $accessToken, $fileName, $jsonPayload);
 
         return $this->json(['message' => 'Support ticket created successfully'], 201);
+    }
+
+    private function getAccessToken(HttpClientInterface $httpClient): string {
+        $response = $httpClient->request('POST', 'https://api.dropbox.com/oauth2/token', [
+            'body' => [
+                'grant_type' => 'refresh_token',
+                'refresh_token' => $this->getParameter('dropbox.refresh_token'),
+                'client_id' => $this->getParameter('dropbox.app_key'),
+                'client_secret' => $this->getParameter('dropbox.app_secret'),
+            ],
+        ]);
+
+        $data = $response->toArray();
+
+        return $data['access_token'];
     }
 
     public function sendToDropBox(HttpClientInterface $httpClient, string $dropBoxToken, string $fileName, string $jsonPayload){
