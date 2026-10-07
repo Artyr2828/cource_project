@@ -8,7 +8,8 @@ class RateLimitService{
     public function __construct(
         private RateLimiterFactory $loginLimiter,
         private RateLimiterFactory $apiLimiter,
-        private RateLimiterFactory $positionCreateLimiter
+        private RateLimiterFactory $positionCreateLimiter,
+        private RateLimiterFactory $supportCreateLimiter
     ){}
 
     public function enforce(string $email, string $clientIp, string $typeOfLimiter): void
@@ -20,7 +21,9 @@ class RateLimitService{
             $limiter = $this->apiLimiter->create($key);
         } else if ($typeOfLimiter === 'positionCreate'){
             $limiter = $this->positionCreateLimiter->create($key);
-        } 
+        } else if ($typeOfLimiter === 'supportCreate'){
+            $limiter = $this->supportCreateLimiter->create($key);
+        }
         else {
              throw new \InvalidArgumentException('Unknown limiter type');
         }

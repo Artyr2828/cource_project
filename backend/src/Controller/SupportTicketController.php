@@ -9,14 +9,21 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use App\DTO\TicketDto;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+use App\Service\RateLimitService;
 
 final class SupportTicketController extends AbstractController
 {
+    public function __construct(
+        private RateLimitService $rateLimitService
+    ){}
+
     #[Route('/api/support/ticket', name: 'app_support_ticket', methods: ['POST'])]
     public function create(#[MapRequestPayload] TicketDto $ticketDto, HttpClientInterface $httpClient): JsonResponse
     {
         /** @var \App\Entity\User $user */
         $user = $this->getUser();
+        $this->rateLimitService->enforce($user->getEmail(), $request->getClientIp(), 'api');
+        $this->rateLimitService->enforce($user->getEmail(), $request->getClientIp(), 'supportCreate');
         $profile = $user->getProfile();
         $reportedBy = sprintf('%s %s (Role: %s)', $profile->getMe()->getFirstName(), $profile->getMe()->getLastName(), $user->getRole());
         $ticketDto = $ticketDto->withReportedBy($reportedBy);
