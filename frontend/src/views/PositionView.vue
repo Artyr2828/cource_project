@@ -376,6 +376,8 @@ import { useAttributeStore } from '@/stores/AttributeStore.js';
 import { usePositionStore } from '@/stores/PositionStore.js';
 import axios from '../services/api.js';
 import { useModalHelpStore } from '@/stores/ModalHelp.js';
+import { useRoute } from 'vue-router'
+const route = useRoute()
 const attributeStore = useAttributeStore();
 const positionStore = usePositionStore();
 const modalHelp = useModalHelpStore();
@@ -399,6 +401,14 @@ const position = ref({
 
 onMounted(async () => {
     await positionStore.fetchPosition(null);
+
+    const targetId = route.query.id;
+    if (targetId && positionStore.position) {
+        const targetPosition = positionStore.position.find(p => p.id == targetId);
+        if (targetPosition) {
+            positionStore.currentPosition = targetPosition;
+        }
+    }
 
     try {
         await userProfile.fetchProfile();

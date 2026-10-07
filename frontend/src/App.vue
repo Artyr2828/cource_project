@@ -138,7 +138,9 @@ async function sendSupportTicket(){
       "position": positionStore.currentPosition ? positionStore.currentPosition.name : null,
       "priority": priority.value,
       "summary": summary.value,
-      "link": positionStore.currentPosition ? `${window.location.origin}?id=${positionStore.currentPosition.id}` : window.location.origin,
+      "link": positionStore.currentPosition 
+    ? `${window.location.origin}/positions?id=${positionStore.currentPosition.id}`
+    : window.location.href,
       "adminEmails": adminEmails
     }
     isLoading.value = true;
