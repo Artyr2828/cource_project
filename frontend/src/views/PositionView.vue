@@ -403,7 +403,6 @@ onMounted(async () => {
     await positionStore.fetchPosition(null);
     const targetId = route.query.id;
 
-   const targetId = route.query.id;
     if (targetId && positionStore.position?.positions) {
         const targetPosition = positionStore.position.positions.find(p => p.id == targetId);
         
