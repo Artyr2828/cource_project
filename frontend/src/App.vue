@@ -67,7 +67,7 @@
 
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" @click="isClickOnHelp = false">Close</button>
-        <button v-if="successfuly === true" @click="sendSupportTicket" type="button" class="btn btn-primary">
+        <button v-if="successfuly === false" @click="sendSupportTicket" type="button" class="btn btn-primary">
           <span v-if="isLoading" class="spinner-border" style="width: 20px; height: 20px;"></span>
           <span v-else class="text-center fw-bold">Save</span>
         </button>
